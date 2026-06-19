@@ -1,11 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finances Tracker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finances Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 24px;
+      color: #f8fafc;
+    }
+
+    /* ── Summary Cards ── */
+    .cards {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      flex: 1 1 140px;
+      background: #1e2130;
+      border-radius: 10px;
+      padding: 16px;
+      border: 1px solid #2d3148;
+    }
+
+    .card .label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    .card .value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .green { color: #4ade80; }
+    .red   { color: #f87171; }
+    .blue  { color: #60a5fa; }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #64748b;
+      margin-bottom: 10px;
+    }
+
+    /* ── Weekly Table ── */
+    .table-wrap {
+      background: #1e2130;
+      border-radius: 10px;
+      border: 1px solid #2d3148;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead th {
+      background: #161824;
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+    }
+
+    thead th:not(:first-child) { text-align: right; }
+
+    tbody tr { border-top: 1px solid #2d3148; }
+
+    tbody tr:hover { background: #252840; }
+
+    tbody td {
+      padding: 11px 16px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    tbody td:not(:first-child) { text-align: right; }
+
+    tfoot tr { border-top: 2px solid #3b4166; }
+
+    tfoot td {
+      padding: 11px 16px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      background: #161824;
+    }
+
+    tfoot td:not(:first-child) { text-align: right; }
+
+    .zero { color: #475569; }
+
+    /* ── Status ── */
+    #status {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+
+    #status.error { color: #f87171; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #2d3148;
+      border-top-color: #60a5fa;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
-    <h1>Finances Tracker</h1>
+
+  <h1>Finances Tracker</h1>
+
+  <div id="status"><span class="spinner"></span> Loading data…</div>
+
+  <!-- Top summary cards -->
+  <div class="cards">
+    <div class="card">
+      <div class="label">Total Income</div>
+      <div class="value blue" id="card-income">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Total Expenses</div>
+      <div class="value red" id="card-expenses">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Net</div>
+      <div class="value" id="card-net">—</div>
+    </div>
+  </div>
+
+  <!-- Weekly breakdown -->
+  <div class="section-title">Weekly Breakdown</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Income</th>
+          <th>Expenses</th>
+          <th>Net</th>
+        </tr>
+      </thead>
+      <tbody id="weekly-body">
+        <tr><td colspan="4" style="color:#475569;padding:16px">Loading…</td></tr>
+      </tbody>
+      <tfoot id="weekly-foot"></tfoot>
+    </table>
+  </div>
+
+  <script>
+    // ── Replace this with your deployed GAS Web App URL ──
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxQMMkCdDsavAta55MD0SxkoRoigKCOsb40yS9rhD68UCkSYDGYqlOJccuK1AIAAKY/exec';
+
+    const fmt = v => {
+      if (v === '' || v === null || v === undefined) return '';
+      const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[$,]/g, ''));
+      if (isNaN(n)) return v;
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+    };
+
+    const colorClass = n => n > 0 ? 'green' : n < 0 ? 'red' : 'zero';
+
+    function toNum(v) {
+      if (typeof v === 'number') return v;
+      return parseFloat(String(v).replace(/[$,]/g, '')) || 0;
+    }
+
+    function renderSummary(rows) {
+      // rows[0] = header row, rows[1..5] = Week 1–5, rows[6] = totals
+      // Sheet columns: A=week-income-label, B=income, C=week-expense-label, D=expenses, E=net
+      const body  = document.getElementById('weekly-body');
+      const foot  = document.getElementById('weekly-foot');
+      body.innerHTML = '';
+      foot.innerHTML = '';
+
+      const dataRows = rows.slice(1, 6);   // Week 1–5
+      const totalRow = rows[6] || [];
+
+      dataRows.forEach((r, i) => {
+        const income   = toNum(r[1]);
+        const expense  = toNum(r[3]);
+        const net      = toNum(r[4]);
+        const allZero  = income === 0 && expense === 0;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>Week ${i + 1}</td>
+          <td class="${allZero ? 'zero' : 'blue'}">${allZero ? '—' : fmt(income)}</td>
+          <td class="${allZero ? 'zero' : 'red'}">${allZero ? '—' : fmt(expense)}</td>
+          <td class="${allZero ? 'zero' : colorClass(net)}">${allZero ? '—' : fmt(net)}</td>
+        `;
+        body.appendChild(tr);
+      });
+
+      if (totalRow.length) {
+        const tIncome  = toNum(totalRow[1]);
+        const tExpense = toNum(totalRow[3]);
+        const tNet     = toNum(totalRow[4]);
+
+        foot.innerHTML = `
+          <tr>
+            <td>Total</td>
+            <td class="blue">${fmt(tIncome)}</td>
+            <td class="red">${fmt(tExpense)}</td>
+            <td class="${colorClass(tNet)}">${fmt(tNet)}</td>
+          </tr>
+        `;
+
+        document.getElementById('card-income').textContent   = fmt(tIncome);
+        document.getElementById('card-expenses').textContent = fmt(tExpense);
+        const netEl = document.getElementById('card-net');
+        netEl.textContent = fmt(tNet);
+        netEl.className   = 'value ' + colorClass(tNet);
+      }
+    }
+
+    async function loadData() {
+      const status = document.getElementById('status');
+
+      if (GAS_URL === 'YOUR_SCRIPT_URL_HERE') {
+        status.textContent = '⚠ Paste your GAS Web App URL into GAS_URL in this file to load live data.';
+        status.className = 'error';
+        return;
+      }
+
+      try {
+        const res  = await fetch(GAS_URL);
+        const data = await res.json();
+        renderSummary(data.summary);
+        status.textContent = `Last synced: ${new Date().toLocaleTimeString()}`;
+        status.className   = '';
+      } catch (err) {
+        status.textContent = `Error loading data: ${err.message}`;
+        status.className   = 'error';
+      }
+    }
+
+    loadData();
+  </script>
+
 </body>
 </html>
