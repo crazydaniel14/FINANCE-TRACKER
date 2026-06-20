@@ -195,50 +195,6 @@
     .blue  { color: #60a5fa; }
     .zero  { color: #475569; }
 
-    /* ── Section title ── */
-    .section-title {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #64748b;
-      margin-bottom: 10px;
-    }
-
-    /* ── Weekly Table ── */
-    .table-wrap {
-      background: #1e2130;
-      border-radius: 10px;
-      border: 1px solid #2d3148;
-      overflow: hidden;
-      margin-bottom: 24px;
-    }
-
-    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-
-    thead th {
-      background: #161824;
-      padding: 10px 16px;
-      text-align: left;
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #64748b;
-    }
-    thead th:not(:first-child) { text-align: right; }
-
-    tbody tr  { border-top: 1px solid #2d3148; }
-    tbody tr:hover { background: #252840; }
-    tbody td  { padding: 11px 16px; font-variant-numeric: tabular-nums; }
-    tbody td:not(:first-child) { text-align: right; }
-
-    tfoot tr  { border-top: 2px solid #3b4166; }
-    tfoot td  {
-      padding: 11px 16px; font-weight: 700;
-      font-variant-numeric: tabular-nums; background: #161824;
-    }
-    tfoot td:not(:first-child) { text-align: right; }
 
     /* ── Status ── */
     #status { font-size: 0.8rem; color: #64748b; margin-bottom: 16px; }
@@ -358,25 +314,6 @@
     </div>
   </div>
 
-  <!-- Weekly breakdown -->
-  <div class="section-title">Weekly Breakdown</div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Week</th>
-          <th>Income</th>
-          <th>Expenses</th>
-          <th>Net</th>
-        </tr>
-      </thead>
-      <tbody id="weekly-body">
-        <tr><td colspan="4" style="color:#475569;padding:16px">Loading…</td></tr>
-      </tbody>
-      <tfoot id="weekly-foot"></tfoot>
-    </table>
-  </div>
-
   <!-- Toast notification -->
   <div class="toast" id="toast"></div>
 
@@ -397,7 +334,6 @@
       return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
     };
     const colorClass = n => n > 0 ? 'green' : n < 0 ? 'red' : 'zero';
-    const toNum = v => typeof v === 'number' ? v : parseFloat(String(v).replace(/[$,]/g, '')) || 0;
 
     // ── Toast ──
     function showToast(msg, isError = false) {
@@ -407,43 +343,13 @@
       setTimeout(() => { t.className = 'toast' + (isError ? ' error' : ''); }, 3000);
     }
 
-    // ── Render summary table ──
-    function renderSummary(rows) {
-      const body = document.getElementById('weekly-body');
-      const foot = document.getElementById('weekly-foot');
-      body.innerHTML = '';
-      foot.innerHTML = '';
-
-      rows.slice(1, 6).forEach((r, i) => {
-        const income  = toNum(r[1]);
-        const expense = toNum(r[3]);
-        const net     = toNum(r[4]);
-        const empty   = income === 0 && expense === 0;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>Week ${i + 1}</td>
-          <td class="${empty ? 'zero' : 'blue'}">${empty ? '—' : fmt(income)}</td>
-          <td class="${empty ? 'zero' : 'red'}">${empty ? '—' : fmt(expense)}</td>
-          <td class="${empty ? 'zero' : colorClass(net)}">${empty ? '—' : fmt(net)}</td>`;
-        body.appendChild(tr);
-      });
-
-      const tot = rows[6] || [];
-      if (tot.length) {
-        const tI = toNum(tot[1]), tE = toNum(tot[3]), tN = toNum(tot[4]);
-        foot.innerHTML = `
-          <tr>
-            <td>Total</td>
-            <td class="blue">${fmt(tI)}</td>
-            <td class="red">${fmt(tE)}</td>
-            <td class="${colorClass(tN)}">${fmt(tN)}</td>
-          </tr>`;
-        document.getElementById('card-income').textContent   = fmt(tI);
-        document.getElementById('card-expenses').textContent = fmt(tE);
-        const netEl = document.getElementById('card-net');
-        netEl.textContent = fmt(tN);
-        netEl.className   = 'value ' + colorClass(tN);
-      }
+    // ── Render cards ──
+    function renderCards(income, expenses, net) {
+      document.getElementById('card-income').textContent   = fmt(income);
+      document.getElementById('card-expenses').textContent = fmt(expenses);
+      const netEl = document.getElementById('card-net');
+      netEl.textContent = fmt(net);
+      netEl.className   = 'value ' + colorClass(net);
     }
 
     // ── Month nav ──
@@ -453,7 +359,7 @@
       document.getElementById('btn-next').disabled = isLatest;
     }
 
-    // ── Load summary ──
+    // ── Load data from GAS ──
     async function loadData() {
       const status = document.getElementById('status');
       status.innerHTML = '<span class="spinner"></span> Loading…';
@@ -462,7 +368,7 @@
       try {
         const res  = await fetch(`${GAS_URL}?action=summary&month=${viewMonth}&year=${viewYear}`);
         const data = await res.json();
-        renderSummary(data.summary);
+        renderCards(data.income, data.expenses, data.net);
         status.textContent = `Last synced: ${new Date().toLocaleTimeString()}`;
       } catch (err) {
         status.textContent = `Error: ${err.message}`;
