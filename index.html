@@ -226,7 +226,14 @@
       gap: 10px;
       position: relative;
       overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.12s;
     }
+    .ct-card:hover {
+      border-color: var(--gold-ring);
+      box-shadow: 0 0 0 1px var(--gold-ring), 0 6px 20px rgba(0,0,0,0.35);
+    }
+    .ct-card:active { transform: scale(0.96); }
     .ct-card::before {
       content: '';
       position: absolute;
@@ -584,6 +591,116 @@
     }
     .toast.error { background: var(--red); color: #1a0000; }
     .toast.show  { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ── Card transactions modal header ── */
+    .card-modal-meta { display: flex; align-items: center; gap: 10px; }
+    .card-modal-logo {
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .card-modal-logo.apple { background: #000; }
+    .card-modal-logo.wf    { background: #fff; padding: 3px; }
+    .card-modal-logo.cash  { background: transparent; }
+    .card-modal-logo img   { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .card-modal-name  { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .card-modal-total { font-size: 0.72rem; color: var(--text-2); margin-top: 2px; }
+
+    /* ── Search bar ── */
+    .tx-search-wrap {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .tx-search-icon {
+      position: absolute;
+      left: 13px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-3);
+      pointer-events: none;
+      display: flex; align-items: center;
+    }
+    #tx-search {
+      width: 100%;
+      background: var(--bg);
+      border: 1.5px solid var(--border-2);
+      border-radius: 10px;
+      padding: 10px 13px 10px 38px;
+      color: var(--text);
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    #tx-search:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-ring);
+    }
+    #tx-search::placeholder { color: var(--text-3); }
+
+    /* ── Transaction list ── */
+    .tx-list { display: flex; flex-direction: column; }
+
+    .tx-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+    .tx-row:last-child { border-bottom: none; }
+
+    .tx-row-left  { flex: 1; min-width: 0; }
+    .tx-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .tx-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .tx-meta-text { font-size: 0.72rem; color: var(--text-2); }
+    .tx-badge {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-3);
+    }
+    .tx-badge.essential   { color: var(--green); border-color: rgba(62,207,142,0.25); background: rgba(62,207,142,0.07); }
+    .tx-badge.unnecessary { color: var(--red);   border-color: rgba(224,85,85,0.25);  background: rgba(224,85,85,0.07); }
+    .tx-badge.income      { color: var(--gold);  border-color: rgba(201,168,76,0.25); background: var(--gold-dim); }
+    .tx-badge.home        { color: var(--blue);  border-color: rgba(96,144,208,0.25); background: rgba(96,144,208,0.07); }
+
+    .tx-row-right  { text-align: right; flex-shrink: 0; }
+    .tx-amount {
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .tx-amount.income { color: var(--green); }
+    .tx-date { font-size: 0.7rem; color: var(--text-3); }
+
+    .tx-empty {
+      text-align: center;
+      padding: 44px 20px;
+      color: var(--text-3);
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
@@ -745,6 +862,39 @@
       </div>
 
     </form>
+  </div>
+</div>
+
+<!-- Card transactions modal -->
+<div class="modal-overlay" id="card-modal-overlay" role="dialog" aria-modal="true" aria-label="Card Transactions">
+  <div class="modal-card" id="card-modal-card">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="card-modal-meta">
+        <div class="card-modal-logo" id="card-modal-logo-wrap">
+          <img id="card-modal-logo-img" src="" alt="">
+        </div>
+        <div>
+          <div class="card-modal-name" id="card-modal-name">Transactions</div>
+          <div class="card-modal-total" id="card-modal-total"></div>
+        </div>
+      </div>
+      <button class="modal-close" id="card-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="tx-search-wrap">
+      <span class="tx-search-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
+        </svg>
+      </span>
+      <input type="text" id="tx-search" placeholder="Search by name, date, amount or category…" autocomplete="off">
+    </div>
+
+    <div id="tx-list">
+      <div class="tx-empty"><span class="spinner"></span> Loading…</div>
+    </div>
   </div>
 </div>
 
@@ -938,9 +1088,9 @@
   });
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && document.getElementById('modal-overlay').classList.contains('visible')) {
-      closeForm();
-    }
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('card-modal-overlay').classList.contains('visible')) closeCardModal();
+    else if (document.getElementById('modal-overlay').classList.contains('visible')) closeForm();
   });
 
   document.getElementById('btn-prev').addEventListener('click', () => {
@@ -958,6 +1108,174 @@
       loadData();
     }
   });
+
+  // ── Card transactions ──
+  const CARD_META = {
+    apple: { key: 'Apple',       label: 'Apple Card',  logo: 'Images/Apple logo.png', cls: 'apple' },
+    wf:    { key: 'Wells Fargo', label: 'Wells Fargo', logo: 'Images/WF.png',          cls: 'wf'    },
+    cash:  { key: 'Cash',        label: 'Cash',        logo: 'Images/cash.png',        cls: 'cash'  },
+  };
+
+  const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function fmtDateShort(iso) {
+    if (!iso) return '';
+    const [, m, d] = iso.split('-');
+    return `${MONTH_ABBR[parseInt(m, 10) - 1]} ${parseInt(d, 10)}`;
+  }
+
+  let activeCardMeta  = null;
+  let allTransactions = [];
+
+  function openCardModal(cardId) {
+    activeCardMeta  = CARD_META[cardId];
+    allTransactions = [];
+
+    const logoWrap = document.getElementById('card-modal-logo-wrap');
+    logoWrap.className = `card-modal-logo ${activeCardMeta.cls}`;
+    const logoImg  = document.getElementById('card-modal-logo-img');
+    logoImg.src    = activeCardMeta.logo;
+    logoImg.alt    = activeCardMeta.label;
+
+    document.getElementById('card-modal-name').textContent  = activeCardMeta.label;
+    document.getElementById('card-modal-total').textContent = '';
+    document.getElementById('tx-list').innerHTML = '<div class="tx-empty"><span class="spinner"></span> Loading…</div>';
+    document.getElementById('tx-search').value  = '';
+
+    document.getElementById('card-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    fetchCardTransactions();
+  }
+
+  function closeCardModal() {
+    document.getElementById('card-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+    activeCardMeta  = null;
+    allTransactions = [];
+  }
+
+  async function fetchCardTransactions() {
+    if (!activeCardMeta) return;
+    try {
+      const url  = `${GAS_URL}?action=transactions&cardType=${encodeURIComponent(activeCardMeta.key)}&month=${viewMonth}&year=${viewYear}`;
+      const data = await fetch(url).then(r => r.json());
+      allTransactions = data.transactions || [];
+
+      const total = allTransactions
+        .filter(t => (t.expType || '').toLowerCase() !== 'income')
+        .reduce((s, t) => s + t.amount, 0);
+      document.getElementById('card-modal-total').textContent =
+        `${fmt(total)} spent · ${MONTHS[viewMonth - 1]} ${viewYear}`;
+
+      renderTransactions(allTransactions);
+    } catch {
+      document.getElementById('tx-list').innerHTML = '<div class="tx-empty">Error loading transactions</div>';
+    }
+  }
+
+  function renderTransactions(txns) {
+    const container = document.getElementById('tx-list');
+    if (!txns.length) {
+      container.innerHTML = '<div class="tx-empty">No transactions found</div>';
+      return;
+    }
+
+    const list = document.createElement('div');
+    list.className = 'tx-list';
+
+    txns.forEach(t => {
+      const isIncome = (t.expType || '').toLowerCase() === 'income';
+      const row      = document.createElement('div');
+      row.className  = 'tx-row';
+
+      const left  = document.createElement('div');
+      left.className = 'tx-row-left';
+
+      const name = document.createElement('div');
+      name.className   = 'tx-name';
+      name.textContent = t.name;
+      left.appendChild(name);
+
+      const meta = document.createElement('div');
+      meta.className = 'tx-meta';
+
+      if (t.source === 'home') {
+        const badge = document.createElement('span');
+        badge.className   = 'tx-badge home';
+        badge.textContent = 'Home';
+        meta.appendChild(badge);
+        if (t.description) {
+          const desc = document.createElement('span');
+          desc.className   = 'tx-meta-text';
+          desc.textContent = t.description;
+          meta.appendChild(desc);
+        }
+      } else {
+        if (t.category) {
+          const cat = document.createElement('span');
+          cat.className   = 'tx-meta-text';
+          cat.textContent = t.category;
+          meta.appendChild(cat);
+        }
+        if (t.expType) {
+          const badge = document.createElement('span');
+          badge.className   = `tx-badge ${t.expType.toLowerCase()}`;
+          badge.textContent = t.expType;
+          meta.appendChild(badge);
+        }
+      }
+      left.appendChild(meta);
+
+      const right  = document.createElement('div');
+      right.className = 'tx-row-right';
+
+      const amount = document.createElement('div');
+      amount.className   = 'tx-amount' + (isIncome ? ' income' : '');
+      amount.textContent = (isIncome ? '+' : '') + fmt(t.amount);
+      right.appendChild(amount);
+
+      const date = document.createElement('div');
+      date.className   = 'tx-date';
+      date.textContent = fmtDateShort(t.date);
+      right.appendChild(date);
+
+      row.appendChild(left);
+      row.appendChild(right);
+      list.appendChild(row);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(list);
+  }
+
+  function filterTransactions(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) { renderTransactions(allTransactions); return; }
+    const filtered = allTransactions.filter(t => {
+      const amtStr = fmt(t.amount);
+      return (
+        t.name.toLowerCase().includes(q) ||
+        (t.date || '').includes(q) ||
+        fmtDateShort(t.date).toLowerCase().includes(q) ||
+        amtStr.includes(q) ||
+        (t.category    || '').toLowerCase().includes(q) ||
+        (t.expType     || '').toLowerCase().includes(q) ||
+        (t.description || '').toLowerCase().includes(q)
+      );
+    });
+    renderTransactions(filtered);
+  }
+
+  // Wire up ct-cards
+  document.querySelectorAll('.ct-card').forEach((card, i) => {
+    card.addEventListener('click', () => openCardModal(['apple', 'wf', 'cash'][i]));
+  });
+
+  document.getElementById('card-modal-close').addEventListener('click', closeCardModal);
+  document.getElementById('card-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('card-modal-overlay')) closeCardModal();
+  });
+  document.getElementById('tx-search').addEventListener('input', e => filterTransactions(e.target.value));
 
   loadData();
 </script>
