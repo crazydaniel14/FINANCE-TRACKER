@@ -15,19 +15,156 @@
       padding: 24px 16px;
     }
 
+    /* ── Page header ── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
     h1 {
       font-size: 1.5rem;
       font-weight: 700;
       letter-spacing: 0.02em;
-      margin-bottom: 24px;
       color: #f8fafc;
+    }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: #3b5bdb;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      padding: 8px 16px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover  { background: #4c6ef5; }
+    .btn-primary:active { background: #364fc7; }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      color: #94a3b8;
+      padding: 8px 16px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-secondary:hover { background: #1e2130; color: #e2e8f0; }
+
+    /* ── Month Nav ── */
+    .month-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .month-nav button {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      color: #94a3b8;
+      border-radius: 6px;
+      width: 32px; height: 32px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .month-nav button:hover    { background: #252840; color: #e2e8f0; }
+    .month-nav button:disabled { opacity: 0.3; cursor: default; }
+
+    #month-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f8fafc;
+      min-width: 130px;
+      text-align: center;
+    }
+
+    /* ── Entry Form Panel ── */
+    .form-panel {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      animation: slideDown 0.18s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-panel.hidden { display: none; }
+
+    .form-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 480px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .form-group label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #e2e8f0;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s;
+      appearance: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus { border-color: #4c6ef5; }
+
+    .form-group input::placeholder { color: #475569; }
+
+    /* date input calendar icon color */
+    .form-group input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
     }
 
     /* ── Summary Cards ── */
     .cards {
       display: flex;
       gap: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
     }
 
@@ -56,6 +193,7 @@
     .green { color: #4ade80; }
     .red   { color: #f87171; }
     .blue  { color: #60a5fa; }
+    .zero  { color: #475569; }
 
     /* ── Section title ── */
     .section-title {
@@ -76,11 +214,7 @@
       margin-bottom: 24px;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 
     thead th {
       background: #161824;
@@ -92,40 +226,22 @@
       letter-spacing: 0.08em;
       color: #64748b;
     }
-
     thead th:not(:first-child) { text-align: right; }
 
-    tbody tr { border-top: 1px solid #2d3148; }
-
+    tbody tr  { border-top: 1px solid #2d3148; }
     tbody tr:hover { background: #252840; }
-
-    tbody td {
-      padding: 11px 16px;
-      font-variant-numeric: tabular-nums;
-    }
-
+    tbody td  { padding: 11px 16px; font-variant-numeric: tabular-nums; }
     tbody td:not(:first-child) { text-align: right; }
 
-    tfoot tr { border-top: 2px solid #3b4166; }
-
-    tfoot td {
-      padding: 11px 16px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      background: #161824;
+    tfoot tr  { border-top: 2px solid #3b4166; }
+    tfoot td  {
+      padding: 11px 16px; font-weight: 700;
+      font-variant-numeric: tabular-nums; background: #161824;
     }
-
     tfoot td:not(:first-child) { text-align: right; }
 
-    .zero { color: #475569; }
-
     /* ── Status ── */
-    #status {
-      font-size: 0.8rem;
-      color: #64748b;
-      margin-bottom: 16px;
-    }
-
+    #status { font-size: 0.8rem; color: #64748b; margin-bottom: 16px; }
     #status.error { color: #f87171; }
 
     /* ── Spinner ── */
@@ -139,17 +255,93 @@
       vertical-align: middle;
       margin-right: 6px;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #22c55e;
+      color: #052e16;
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 8px;
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.error { background: #f87171; color: #1f0000; }
+    .toast.show  { transform: translateX(-50%) translateY(0); opacity: 1; }
   </style>
 </head>
 <body>
 
-  <h1>Finances Tracker</h1>
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Finances Tracker</h1>
+    <button class="btn-primary" id="btn-toggle-form">+ Add Entry</button>
+  </div>
+
+  <!-- Entry Form -->
+  <div class="form-panel hidden" id="form-panel">
+    <div class="form-title">New Entry</div>
+    <form id="entry-form" novalidate>
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="f-name">Name</label>
+          <input id="f-name" type="text" placeholder="e.g. Groceries" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f-date">Date</label>
+          <input id="f-date" type="date" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f-amount">Amount ($)</label>
+          <input id="f-amount" type="number" min="0" step="0.01" placeholder="0.00" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f-category">Category</label>
+          <input id="f-category" type="text" placeholder="e.g. Food" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f-cardtype">Card Type</label>
+          <input id="f-cardtype" type="text" placeholder="e.g. Visa" required>
+        </div>
+
+        <div class="form-group">
+          <label for="f-exptype">EXP. TYPE</label>
+          <select id="f-exptype" required>
+            <option value="Expense">Expense</option>
+            <option value="Income">Income</option>
+          </select>
+        </div>
+
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" id="btn-cancel">Cancel</button>
+        <button type="submit" class="btn-primary" id="btn-submit">Save Entry</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Month navigation -->
+  <div class="month-nav">
+    <button id="btn-prev">&#8592;</button>
+    <span id="month-label">—</span>
+    <button id="btn-next">&#8594;</button>
+  </div>
 
   <div id="status"><span class="spinner"></span> Loading data…</div>
 
-  <!-- Top summary cards -->
+  <!-- Summary cards -->
   <div class="cards">
     <div class="card">
       <div class="label">Total Income</div>
@@ -184,93 +376,172 @@
     </table>
   </div>
 
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
   <script>
-    // ── Replace this with your deployed GAS Web App URL ──
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxQMMkCdDsavAta55MD0SxkoRoigKCOsb40yS9rhD68UCkSYDGYqlOJccuK1AIAAKY/exec';
 
+    const MONTHS = ['January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+
+    const today = new Date();
+    let viewMonth = today.getMonth() + 1;
+    let viewYear  = today.getFullYear();
+
+    // ── Helpers ──
     const fmt = v => {
-      if (v === '' || v === null || v === undefined) return '';
       const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[$,]/g, ''));
-      if (isNaN(n)) return v;
+      if (isNaN(n)) return '—';
       return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
     };
-
     const colorClass = n => n > 0 ? 'green' : n < 0 ? 'red' : 'zero';
+    const toNum = v => typeof v === 'number' ? v : parseFloat(String(v).replace(/[$,]/g, '')) || 0;
 
-    function toNum(v) {
-      if (typeof v === 'number') return v;
-      return parseFloat(String(v).replace(/[$,]/g, '')) || 0;
+    // ── Toast ──
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className   = 'toast' + (isError ? ' error' : '') + ' show';
+      setTimeout(() => { t.className = 'toast' + (isError ? ' error' : ''); }, 3000);
     }
 
+    // ── Render summary table ──
     function renderSummary(rows) {
-      // rows[0] = header row, rows[1..5] = Week 1–5, rows[6] = totals
-      // Sheet columns: A=week-income-label, B=income, C=week-expense-label, D=expenses, E=net
-      const body  = document.getElementById('weekly-body');
-      const foot  = document.getElementById('weekly-foot');
+      const body = document.getElementById('weekly-body');
+      const foot = document.getElementById('weekly-foot');
       body.innerHTML = '';
       foot.innerHTML = '';
 
-      const dataRows = rows.slice(1, 6);   // Week 1–5
-      const totalRow = rows[6] || [];
-
-      dataRows.forEach((r, i) => {
-        const income   = toNum(r[1]);
-        const expense  = toNum(r[3]);
-        const net      = toNum(r[4]);
-        const allZero  = income === 0 && expense === 0;
-
+      rows.slice(1, 6).forEach((r, i) => {
+        const income  = toNum(r[1]);
+        const expense = toNum(r[3]);
+        const net     = toNum(r[4]);
+        const empty   = income === 0 && expense === 0;
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>Week ${i + 1}</td>
-          <td class="${allZero ? 'zero' : 'blue'}">${allZero ? '—' : fmt(income)}</td>
-          <td class="${allZero ? 'zero' : 'red'}">${allZero ? '—' : fmt(expense)}</td>
-          <td class="${allZero ? 'zero' : colorClass(net)}">${allZero ? '—' : fmt(net)}</td>
-        `;
+          <td class="${empty ? 'zero' : 'blue'}">${empty ? '—' : fmt(income)}</td>
+          <td class="${empty ? 'zero' : 'red'}">${empty ? '—' : fmt(expense)}</td>
+          <td class="${empty ? 'zero' : colorClass(net)}">${empty ? '—' : fmt(net)}</td>`;
         body.appendChild(tr);
       });
 
-      if (totalRow.length) {
-        const tIncome  = toNum(totalRow[1]);
-        const tExpense = toNum(totalRow[3]);
-        const tNet     = toNum(totalRow[4]);
-
+      const tot = rows[6] || [];
+      if (tot.length) {
+        const tI = toNum(tot[1]), tE = toNum(tot[3]), tN = toNum(tot[4]);
         foot.innerHTML = `
           <tr>
             <td>Total</td>
-            <td class="blue">${fmt(tIncome)}</td>
-            <td class="red">${fmt(tExpense)}</td>
-            <td class="${colorClass(tNet)}">${fmt(tNet)}</td>
-          </tr>
-        `;
-
-        document.getElementById('card-income').textContent   = fmt(tIncome);
-        document.getElementById('card-expenses').textContent = fmt(tExpense);
+            <td class="blue">${fmt(tI)}</td>
+            <td class="red">${fmt(tE)}</td>
+            <td class="${colorClass(tN)}">${fmt(tN)}</td>
+          </tr>`;
+        document.getElementById('card-income').textContent   = fmt(tI);
+        document.getElementById('card-expenses').textContent = fmt(tE);
         const netEl = document.getElementById('card-net');
-        netEl.textContent = fmt(tNet);
-        netEl.className   = 'value ' + colorClass(tNet);
+        netEl.textContent = fmt(tN);
+        netEl.className   = 'value ' + colorClass(tN);
       }
     }
 
+    // ── Month nav ──
+    function updateNav() {
+      document.getElementById('month-label').textContent = `${MONTHS[viewMonth - 1]} ${viewYear}`;
+      const isLatest = viewYear === today.getFullYear() && viewMonth === today.getMonth() + 1;
+      document.getElementById('btn-next').disabled = isLatest;
+    }
+
+    // ── Load summary ──
     async function loadData() {
       const status = document.getElementById('status');
-
-      if (GAS_URL === 'YOUR_SCRIPT_URL_HERE') {
-        status.textContent = '⚠ Paste your GAS Web App URL into GAS_URL in this file to load live data.';
-        status.className = 'error';
-        return;
-      }
-
+      status.innerHTML = '<span class="spinner"></span> Loading…';
+      status.className = '';
+      updateNav();
       try {
-        const res  = await fetch(GAS_URL);
+        const res  = await fetch(`${GAS_URL}?action=summary&month=${viewMonth}&year=${viewYear}`);
         const data = await res.json();
         renderSummary(data.summary);
         status.textContent = `Last synced: ${new Date().toLocaleTimeString()}`;
-        status.className   = '';
       } catch (err) {
-        status.textContent = `Error loading data: ${err.message}`;
+        status.textContent = `Error: ${err.message}`;
         status.className   = 'error';
       }
     }
+
+    // ── Submit new entry ──
+    document.getElementById('entry-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit');
+      btn.disabled    = true;
+      btn.textContent = 'Saving…';
+
+      const params = new URLSearchParams({
+        action:   'append',
+        name:     document.getElementById('f-name').value.trim(),
+        date:     document.getElementById('f-date').value,
+        amount:   document.getElementById('f-amount').value,
+        category: document.getElementById('f-category').value.trim(),
+        cardType: document.getElementById('f-cardtype').value.trim(),
+        expType:  document.getElementById('f-exptype').value,
+      });
+
+      try {
+        const res  = await fetch(`${GAS_URL}?${params}`);
+        const data = await res.json();
+        if (data.success) {
+          showToast('Entry saved!');
+          closeForm();
+          // Refresh to the month of the new entry so it shows up
+          const entryDate = new Date(document.getElementById('f-date').value + 'T00:00:00');
+          viewMonth = entryDate.getMonth() + 1;
+          viewYear  = entryDate.getFullYear();
+          loadData();
+        } else {
+          showToast(data.error || 'Something went wrong', true);
+        }
+      } catch (err) {
+        showToast(`Error: ${err.message}`, true);
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Save Entry';
+      }
+    });
+
+    // ── Form toggle ──
+    function openForm() {
+      // Default date to today
+      document.getElementById('f-date').value = today.toISOString().slice(0, 10);
+      document.getElementById('form-panel').classList.remove('hidden');
+      document.getElementById('btn-toggle-form').textContent = '✕ Close';
+      document.getElementById('f-name').focus();
+    }
+
+    function closeForm() {
+      document.getElementById('form-panel').classList.add('hidden');
+      document.getElementById('btn-toggle-form').textContent = '+ Add Entry';
+      document.getElementById('entry-form').reset();
+    }
+
+    document.getElementById('btn-toggle-form').addEventListener('click', () => {
+      const hidden = document.getElementById('form-panel').classList.contains('hidden');
+      hidden ? openForm() : closeForm();
+    });
+
+    document.getElementById('btn-cancel').addEventListener('click', closeForm);
+
+    // ── Month navigation ──
+    document.getElementById('btn-prev').addEventListener('click', () => {
+      viewMonth--;
+      if (viewMonth < 1) { viewMonth = 12; viewYear--; }
+      loadData();
+    });
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+      viewMonth++;
+      if (viewMonth > 12) { viewMonth = 1; viewYear++; }
+      loadData();
+    });
 
     loadData();
   </script>
