@@ -30,32 +30,314 @@
       color: #f8fafc;
     }
 
-    /* ── Buttons ── */
-    .btn-primary {
-      background: #3b5bdb;
+    /* ── Add Entry button ── */
+    .btn-add {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #4f70e6;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       color: #fff;
-      padding: 8px 16px;
+      padding: 10px 18px;
       font-size: 0.875rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.15s;
+      letter-spacing: 0.01em;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+      box-shadow: 0 2px 12px rgba(79, 112, 230, 0.35);
     }
-    .btn-primary:hover  { background: #4c6ef5; }
-    .btn-primary:active { background: #364fc7; }
+    .btn-add:hover  { background: #5c7bf0; box-shadow: 0 4px 18px rgba(79, 112, 230, 0.5); }
+    .btn-add:active { background: #4060d4; transform: scale(0.97); }
+    .btn-add .add-icon {
+      font-size: 1.15rem;
+      line-height: 1;
+      display: inline-block;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-add.open .add-icon { transform: rotate(45deg); }
 
-    .btn-secondary {
-      background: transparent;
-      border: 1px solid #2d3148;
-      border-radius: 8px;
-      color: #94a3b8;
-      padding: 8px 16px;
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s;
+    /* ── Modal overlay ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
     }
-    .btn-secondary:hover { background: #1e2130; color: #e2e8f0; }
+    @media (min-width: 600px) {
+      .modal-overlay { align-items: center; }
+    }
+    .modal-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ── Modal card ── */
+    .modal-card {
+      background: #181b2a;
+      border: 1px solid #252840;
+      border-bottom: none;
+      border-radius: 20px 20px 0 0;
+      padding: 10px 20px 32px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 92vh;
+      overflow-y: auto;
+      transform: translateY(40px);
+      transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .modal-overlay.visible .modal-card { transform: translateY(0); }
+
+    @media (min-width: 600px) {
+      .modal-card {
+        border: 1px solid #252840;
+        border-radius: 18px;
+        padding: 28px 28px 32px;
+        transform: translateY(20px) scale(0.98);
+        max-height: 88vh;
+      }
+      .modal-overlay.visible .modal-card {
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* drag handle — mobile only */
+    .drag-handle {
+      width: 38px; height: 4px;
+      background: #2d3148;
+      border-radius: 2px;
+      margin: 0 auto 18px;
+    }
+    @media (min-width: 600px) { .drag-handle { display: none; } }
+
+    /* ── Modal header ── */
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: 0.01em;
+    }
+    .modal-close {
+      background: #1e2235;
+      border: 1px solid #252840;
+      color: #64748b;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .modal-close:hover { background: #252840; color: #e2e8f0; }
+
+    /* ── Table toggle ── */
+    .table-toggle {
+      display: flex;
+      background: #0f1117;
+      border: 1px solid #252840;
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+      margin-bottom: 20px;
+    }
+    .toggle-opt {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      color: #64748b;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .toggle-opt.active {
+      background: #252840;
+      color: #e2e8f0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.45);
+    }
+
+    /* ── Amount field (prominent) ── */
+    .amount-section { margin-bottom: 20px; }
+    .field-label {
+      display: block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #64748b;
+      margin-bottom: 7px;
+    }
+    .amount-wrap {
+      display: flex;
+      align-items: center;
+      background: #0f1117;
+      border: 1.5px solid #252840;
+      border-radius: 12px;
+      padding: 14px 16px;
+      gap: 6px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .amount-wrap:focus-within {
+      border-color: #4f70e6;
+      box-shadow: 0 0 0 3px rgba(79, 112, 230, 0.14);
+    }
+    .amount-sign {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #3d4f8a;
+      line-height: 1;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .amount-wrap input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f8fafc;
+      font-size: 1.9rem;
+      font-weight: 700;
+      width: 100%;
+      font-variant-numeric: tabular-nums;
+      font-family: inherit;
+    }
+    .amount-wrap input::placeholder { color: #1e2540; }
+
+    /* ── Form grid ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 420px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .form-group label {
+      display: block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: #0f1117;
+      border: 1.5px solid #252840;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #e2e8f0;
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      appearance: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #4f70e6;
+      box-shadow: 0 0 0 3px rgba(79, 112, 230, 0.12);
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: #2a2f4a; }
+    .form-group input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.4) brightness(1.2); cursor: pointer; }
+    .form-group textarea { resize: vertical; min-height: 74px; }
+
+    /* custom select arrow */
+    .form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 34px;
+    }
+    .form-group select option { background: #181b2a; }
+
+    .col-span { grid-column: 1 / -1; }
+
+    /* ── Expense type pills ── */
+    .exptype-section { margin-bottom: 20px; }
+    .exptype-pills {
+      display: flex;
+      gap: 8px;
+    }
+    .exp-pill {
+      flex: 1;
+      background: #0f1117;
+      border: 1.5px solid #252840;
+      border-radius: 9px;
+      color: #64748b;
+      padding: 9px 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .exp-pill:hover { border-color: #4f70e6; color: #93b4fa; }
+    .exp-pill.active.essential  { background: rgba(74,222,128,0.1); border-color: #4ade80; color: #4ade80; }
+    .exp-pill.active.unnecessary{ background: rgba(248,113,113,0.1); border-color: #f87171; color: #f87171; }
+    .exp-pill.active.income     { background: rgba(96,165,250,0.1); border-color: #60a5fa; color: #60a5fa; }
+
+    /* mode visibility */
+    #entry-form.mode-home     .expenses-only { display: none; }
+    #entry-form.mode-expenses .home-only     { display: none; }
+
+    /* ── Form actions ── */
+    .form-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-cancel {
+      background: transparent;
+      border: 1.5px solid #252840;
+      border-radius: 10px;
+      color: #64748b;
+      padding: 12px 22px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .btn-cancel:hover { background: #1e2235; border-color: #2d3148; color: #94a3b8; }
+    .btn-save {
+      flex: 1;
+      background: #4f70e6;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      padding: 12px 20px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+      box-shadow: 0 2px 10px rgba(79, 112, 230, 0.3);
+    }
+    .btn-save:hover  { background: #5c7bf0; box-shadow: 0 4px 16px rgba(79, 112, 230, 0.45); }
+    .btn-save:active { transform: scale(0.98); }
+    .btn-save:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
 
     /* ── Month Nav ── */
     .month-nav {
@@ -64,13 +346,12 @@
       gap: 12px;
       margin-bottom: 20px;
     }
-
     .month-nav button {
       background: #1e2130;
       border: 1px solid #2d3148;
       color: #94a3b8;
-      border-radius: 6px;
-      width: 32px; height: 32px;
+      border-radius: 8px;
+      width: 34px; height: 34px;
       font-size: 1rem;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
@@ -78,133 +359,12 @@
     }
     .month-nav button:hover    { background: #252840; color: #e2e8f0; }
     .month-nav button:disabled { opacity: 0.3; cursor: default; }
-
     #month-label {
       font-size: 1rem;
       font-weight: 600;
       color: #f8fafc;
       min-width: 130px;
       text-align: center;
-    }
-
-    /* ── Entry Form Panel ── */
-    .form-panel {
-      background: #1e2130;
-      border: 1px solid #2d3148;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
-      animation: slideDown 0.18s ease;
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .form-panel.hidden { display: none; }
-
-    .form-title {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #64748b;
-      margin-bottom: 12px;
-    }
-
-    /* ── Table toggle ── */
-    .table-toggle {
-      display: flex;
-      background: #0f1117;
-      border: 1px solid #2d3148;
-      border-radius: 8px;
-      padding: 3px;
-      gap: 3px;
-      margin-bottom: 16px;
-      width: fit-content;
-    }
-
-    .toggle-opt {
-      background: transparent;
-      border: none;
-      border-radius: 6px;
-      color: #64748b;
-      padding: 6px 14px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-      white-space: nowrap;
-    }
-
-    .toggle-opt.active {
-      background: #1e2130;
-      color: #e2e8f0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-    }
-
-    /* ── Form fields ── */
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    @media (max-width: 480px) { .form-grid { grid-template-columns: 1fr; } }
-
-    .form-group label {
-      display: block;
-      font-size: 0.68rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #64748b;
-      margin-bottom: 5px;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      background: #0f1117;
-      border: 1px solid #2d3148;
-      border-radius: 6px;
-      padding: 8px 10px;
-      color: #e2e8f0;
-      font-size: 0.875rem;
-      font-family: inherit;
-      outline: none;
-      transition: border-color 0.15s;
-      appearance: none;
-    }
-
-    .form-group textarea {
-      resize: vertical;
-      min-height: 68px;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus { border-color: #4c6ef5; }
-
-    .form-group input::placeholder,
-    .form-group textarea::placeholder { color: #475569; }
-
-    .form-group input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
-
-    /* Span description across both columns */
-    .col-span { grid-column: 1 / -1; }
-
-    /* Show/hide fields based on selected table */
-    #entry-form.mode-home     .expenses-only { display: none; }
-    #entry-form.mode-expenses .home-only     { display: none; }
-
-    .form-actions {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
     }
 
     /* ── Summary Cards ── */
@@ -214,25 +374,23 @@
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
-
     .card {
       flex: 1 1 130px;
-      background: #1e2130;
-      border-radius: 10px;
+      background: #1a1d2e;
+      border-radius: 12px;
       padding: 16px;
-      border: 1px solid #2d3148;
+      border: 1px solid #252840;
     }
-
     .card .label {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #94a3b8;
+      letter-spacing: 0.09em;
+      color: #64748b;
       margin-bottom: 6px;
+      font-weight: 600;
     }
-
     .card .value {
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
     }
@@ -247,7 +405,6 @@
     #status { font-size: 0.8rem; color: #64748b; margin-bottom: 16px; }
     #status.error { color: #f87171; }
 
-    /* ── Spinner ── */
     .spinner {
       display: inline-block;
       width: 14px; height: 14px;
@@ -263,18 +420,20 @@
     /* ── Toast ── */
     .toast {
       position: fixed;
-      bottom: 24px; left: 50%;
+      bottom: 28px; left: 50%;
       transform: translateX(-50%) translateY(80px);
       background: #22c55e;
       color: #052e16;
       font-size: 0.875rem;
       font-weight: 600;
-      padding: 10px 20px;
-      border-radius: 8px;
+      padding: 10px 22px;
+      border-radius: 10px;
       opacity: 0;
       transition: transform 0.25s ease, opacity 0.25s ease;
       pointer-events: none;
       white-space: nowrap;
+      z-index: 200;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     }
     .toast.error { background: #f87171; color: #1f0000; }
     .toast.show  { transform: translateX(-50%) translateY(0); opacity: 1; }
@@ -285,70 +444,10 @@
   <!-- Header -->
   <div class="page-header">
     <h1>Finances Tracker</h1>
-    <button class="btn-primary" id="btn-toggle-form">+ Add Entry</button>
-  </div>
-
-  <!-- Entry Form -->
-  <div class="form-panel hidden" id="form-panel">
-    <div class="form-title">New Entry</div>
-
-    <!-- Table selector -->
-    <div class="table-toggle">
-      <button type="button" class="toggle-opt active" data-table="expenses">My Expenses</button>
-      <button type="button" class="toggle-opt" data-table="home">Home Expenses</button>
-    </div>
-
-    <form id="entry-form" class="mode-expenses" novalidate>
-      <div class="form-grid">
-
-        <div class="form-group">
-          <label for="f-name">Name</label>
-          <input id="f-name" type="text" placeholder="e.g. Groceries" required>
-        </div>
-
-        <div class="form-group">
-          <label for="f-date">Date</label>
-          <input id="f-date" type="date" required>
-        </div>
-
-        <div class="form-group">
-          <label for="f-amount">Amount ($)</label>
-          <input id="f-amount" type="number" min="0" step="0.01" placeholder="0.00" required>
-        </div>
-
-        <!-- My Expenses only -->
-        <div class="form-group expenses-only">
-          <label for="f-category">Category</label>
-          <input id="f-category" type="text" placeholder="e.g. Food">
-        </div>
-
-        <div class="form-group">
-          <label for="f-cardtype">Card Type</label>
-          <input id="f-cardtype" type="text" placeholder="e.g. Visa">
-        </div>
-
-        <!-- My Expenses only -->
-        <div class="form-group expenses-only">
-          <label for="f-exptype">EXP. TYPE</label>
-          <select id="f-exptype">
-            <option value="Essential">Essential</option>
-            <option value="Unnecessary">Unnecessary</option>
-            <option value="Income">Income</option>
-          </select>
-        </div>
-
-        <!-- Home Expenses only -->
-        <div class="form-group home-only col-span">
-          <label for="f-description">Description</label>
-          <textarea id="f-description" placeholder="Brief context for this transaction…"></textarea>
-        </div>
-
-      </div>
-      <div class="form-actions">
-        <button type="button" class="btn-secondary" id="btn-cancel">Cancel</button>
-        <button type="submit" class="btn-primary" id="btn-submit">Save Entry</button>
-      </div>
-    </form>
+    <button class="btn-add" id="btn-toggle-form">
+      <span class="add-icon">+</span>
+      Add Entry
+    </button>
   </div>
 
   <!-- Month navigation -->
@@ -380,6 +479,98 @@
     </div>
   </div>
 
+  <!-- Modal overlay -->
+  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-label="New Entry">
+    <div class="modal-card" id="modal-card">
+      <div class="drag-handle"></div>
+
+      <div class="modal-header">
+        <div class="modal-title">New Entry</div>
+        <button class="modal-close" id="btn-modal-close" aria-label="Close">✕</button>
+      </div>
+
+      <!-- Table selector -->
+      <div class="table-toggle">
+        <button type="button" class="toggle-opt active" data-table="expenses">My Expenses</button>
+        <button type="button" class="toggle-opt" data-table="home">Home Expenses</button>
+      </div>
+
+      <form id="entry-form" class="mode-expenses" novalidate>
+
+        <!-- Amount — large and prominent -->
+        <div class="amount-section">
+          <label class="field-label" for="f-amount">Amount</label>
+          <div class="amount-wrap">
+            <span class="amount-sign">$</span>
+            <input id="f-amount" type="number" min="0" step="0.01" placeholder="0.00" required>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="f-name">Name</label>
+            <input id="f-name" type="text" placeholder="e.g. Groceries" required>
+          </div>
+
+          <div class="form-group">
+            <label for="f-date">Date</label>
+            <input id="f-date" type="date" required>
+          </div>
+
+          <div class="form-group">
+            <label for="f-cardtype">Card Type</label>
+            <select id="f-cardtype">
+              <option value="">Select…</option>
+              <option value="Visa">Visa</option>
+              <option value="Mastercard">Mastercard</option>
+              <option value="Amex">Amex</option>
+              <option value="Debit">Debit</option>
+              <option value="Cash">Cash</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <!-- My Expenses only -->
+          <div class="form-group expenses-only">
+            <label for="f-category">Category</label>
+            <select id="f-category">
+              <option value="">Select…</option>
+              <option value="Food">Food</option>
+              <option value="Transport">Transport</option>
+              <option value="Shopping">Shopping</option>
+              <option value="Bills">Bills</option>
+              <option value="Health">Health</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <!-- Home Expenses only -->
+          <div class="form-group home-only col-span">
+            <label for="f-description">Description</label>
+            <textarea id="f-description" placeholder="Brief context for this transaction…"></textarea>
+          </div>
+        </div>
+
+        <!-- Expense type — pill buttons (My Expenses only) -->
+        <div class="exptype-section expenses-only">
+          <label class="field-label">Expense Type</label>
+          <div class="exptype-pills">
+            <button type="button" class="exp-pill essential active" data-value="Essential">Essential</button>
+            <button type="button" class="exp-pill unnecessary" data-value="Unnecessary">Unnecessary</button>
+            <button type="button" class="exp-pill income" data-value="Income">Income</button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" id="btn-cancel">Cancel</button>
+          <button type="submit" class="btn-save" id="btn-submit">Save Entry</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
   <!-- Toast notification -->
   <div class="toast" id="toast"></div>
 
@@ -394,6 +585,7 @@
     let viewYear        = today.getFullYear();
     let availableMonths = [];
     let selectedTable   = 'expenses';
+    let selectedExpType = 'Essential';
 
     // ── Helpers ──
     const fmt = v => {
@@ -467,31 +659,42 @@
         document.querySelectorAll('.toggle-opt').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedTable = btn.dataset.table;
-        const form = document.getElementById('entry-form');
-        form.className = selectedTable === 'home' ? 'mode-home' : 'mode-expenses';
+        document.getElementById('entry-form').className =
+          selectedTable === 'home' ? 'mode-home' : 'mode-expenses';
       });
     });
 
-    // ── Submit new entry ──
+    // ── Expense type pills ──
+    document.querySelectorAll('.exp-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.exp-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        selectedExpType = pill.dataset.value;
+      });
+    });
+
+    // ── Submit ──
     document.getElementById('entry-form').addEventListener('submit', async e => {
       e.preventDefault();
       const btn = document.getElementById('btn-submit');
       btn.disabled    = true;
       btn.textContent = 'Saving…';
 
+      const entryDateValue = document.getElementById('f-date').value;
+
       const base = {
         action:   'append',
         table:    selectedTable,
         name:     document.getElementById('f-name').value.trim(),
-        date:     document.getElementById('f-date').value,
+        date:     entryDateValue,
         amount:   document.getElementById('f-amount').value,
-        cardType: document.getElementById('f-cardtype').value.trim(),
+        cardType: document.getElementById('f-cardtype').value,
       };
 
       const extra = selectedTable === 'home'
         ? { description: document.getElementById('f-description').value.trim() }
-        : { category: document.getElementById('f-category').value.trim(),
-            expType:  document.getElementById('f-exptype').value };
+        : { category: document.getElementById('f-category').value,
+            expType:  selectedExpType };
 
       const params = new URLSearchParams({ ...base, ...extra });
 
@@ -500,10 +703,10 @@
         const data = await res.json();
         if (data.success) {
           showToast('Entry saved!');
-          closeForm();
-          const entryDate = new Date(document.getElementById('f-date').value + 'T00:00:00');
+          const entryDate = new Date(entryDateValue + 'T00:00:00');
           viewMonth = entryDate.getMonth() + 1;
           viewYear  = entryDate.getFullYear();
+          closeForm();
           loadData();
         } else {
           showToast(data.error || 'Something went wrong', true);
@@ -519,27 +722,52 @@
     // ── Form open / close ──
     function openForm() {
       document.getElementById('f-date').value = today.toISOString().slice(0, 10);
-      document.getElementById('form-panel').classList.remove('hidden');
-      document.getElementById('btn-toggle-form').textContent = '✕ Close';
-      document.getElementById('f-name').focus();
+      document.getElementById('modal-overlay').classList.add('visible');
+      document.getElementById('btn-toggle-form').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      // slight delay so the animation starts first
+      setTimeout(() => document.getElementById('f-amount').focus(), 80);
     }
 
     function closeForm() {
-      document.getElementById('form-panel').classList.add('hidden');
-      document.getElementById('btn-toggle-form').textContent = '+ Add Entry';
+      document.getElementById('modal-overlay').classList.remove('visible');
+      document.getElementById('btn-toggle-form').classList.remove('open');
+      document.body.style.overflow = '';
       document.getElementById('entry-form').reset();
-      // Reset to My Expenses tab
+
+      // reset expense type pills
+      selectedExpType = 'Essential';
+      document.querySelectorAll('.exp-pill').forEach(p => p.classList.remove('active'));
+      document.querySelector('.exp-pill.essential').classList.add('active');
+
+      // reset table to My Expenses
       selectedTable = 'expenses';
       document.querySelectorAll('.toggle-opt').forEach(b => b.classList.remove('active'));
       document.querySelector('[data-table="expenses"]').classList.add('active');
       document.getElementById('entry-form').className = 'mode-expenses';
     }
 
+    // toggle on header button
     document.getElementById('btn-toggle-form').addEventListener('click', () => {
-      document.getElementById('form-panel').classList.contains('hidden') ? openForm() : closeForm();
+      document.getElementById('modal-overlay').classList.contains('visible')
+        ? closeForm()
+        : openForm();
     });
 
+    document.getElementById('btn-modal-close').addEventListener('click', closeForm);
     document.getElementById('btn-cancel').addEventListener('click', closeForm);
+
+    // click backdrop to close
+    document.getElementById('modal-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-overlay')) closeForm();
+    });
+
+    // Escape to close
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && document.getElementById('modal-overlay').classList.contains('visible')) {
+        closeForm();
+      }
+    });
 
     // ── Month navigation ──
     document.getElementById('btn-prev').addEventListener('click', () => {
@@ -560,6 +788,5 @@
 
     loadData();
   </script>
-
 </body>
 </html>
