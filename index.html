@@ -110,9 +110,41 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: #64748b;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
+    /* ── Table toggle ── */
+    .table-toggle {
+      display: flex;
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 3px;
+      gap: 3px;
+      margin-bottom: 16px;
+      width: fit-content;
+    }
+
+    .toggle-opt {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: #64748b;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    .toggle-opt.active {
+      background: #1e2130;
+      color: #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+
+    /* ── Form fields ── */
     .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -133,7 +165,8 @@
     }
 
     .form-group input,
-    .form-group select {
+    .form-group select,
+    .form-group textarea {
       width: 100%;
       background: #0f1117;
       border: 1px solid #2d3148;
@@ -141,18 +174,32 @@
       padding: 8px 10px;
       color: #e2e8f0;
       font-size: 0.875rem;
+      font-family: inherit;
       outline: none;
       transition: border-color 0.15s;
       appearance: none;
     }
 
+    .form-group textarea {
+      resize: vertical;
+      min-height: 68px;
+    }
+
     .form-group input:focus,
-    .form-group select:focus { border-color: #4c6ef5; }
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: #4c6ef5; }
 
-    .form-group input::placeholder { color: #475569; }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: #475569; }
 
-    /* date input calendar icon color */
     .form-group input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+
+    /* Span description across both columns */
+    .col-span { grid-column: 1 / -1; }
+
+    /* Show/hide fields based on selected table */
+    #entry-form.mode-home     .expenses-only { display: none; }
+    #entry-form.mode-expenses .home-only     { display: none; }
 
     .form-actions {
       display: flex;
@@ -169,7 +216,7 @@
     }
 
     .card {
-      flex: 1 1 140px;
+      flex: 1 1 130px;
       background: #1e2130;
       border-radius: 10px;
       padding: 16px;
@@ -193,8 +240,8 @@
     .green { color: #4ade80; }
     .red   { color: #f87171; }
     .blue  { color: #60a5fa; }
+    .amber { color: #fb923c; }
     .zero  { color: #475569; }
-
 
     /* ── Status ── */
     #status { font-size: 0.8rem; color: #64748b; margin-bottom: 16px; }
@@ -244,7 +291,14 @@
   <!-- Entry Form -->
   <div class="form-panel hidden" id="form-panel">
     <div class="form-title">New Entry</div>
-    <form id="entry-form" novalidate>
+
+    <!-- Table selector -->
+    <div class="table-toggle">
+      <button type="button" class="toggle-opt active" data-table="expenses">My Expenses</button>
+      <button type="button" class="toggle-opt" data-table="home">Home Expenses</button>
+    </div>
+
+    <form id="entry-form" class="mode-expenses" novalidate>
       <div class="form-grid">
 
         <div class="form-group">
@@ -262,23 +316,31 @@
           <input id="f-amount" type="number" min="0" step="0.01" placeholder="0.00" required>
         </div>
 
-        <div class="form-group">
+        <!-- My Expenses only -->
+        <div class="form-group expenses-only">
           <label for="f-category">Category</label>
-          <input id="f-category" type="text" placeholder="e.g. Food" required>
+          <input id="f-category" type="text" placeholder="e.g. Food">
         </div>
 
         <div class="form-group">
-          <label for="f-cardtype">Source / Card</label>
-          <input id="f-cardtype" type="text" placeholder="Card, bank, or N/A">
+          <label for="f-cardtype">Card Type</label>
+          <input id="f-cardtype" type="text" placeholder="e.g. Visa">
         </div>
 
-        <div class="form-group">
+        <!-- My Expenses only -->
+        <div class="form-group expenses-only">
           <label for="f-exptype">EXP. TYPE</label>
-          <select id="f-exptype" required>
+          <select id="f-exptype">
             <option value="Essential">Essential</option>
             <option value="Unnecessary">Unnecessary</option>
             <option value="Income">Income</option>
           </select>
+        </div>
+
+        <!-- Home Expenses only -->
+        <div class="form-group home-only col-span">
+          <label for="f-description">Description</label>
+          <textarea id="f-description" placeholder="Brief context for this transaction…"></textarea>
         </div>
 
       </div>
@@ -312,6 +374,10 @@
       <div class="label">Net</div>
       <div class="value" id="card-net">—</div>
     </div>
+    <div class="card">
+      <div class="label">Home Transactions</div>
+      <div class="value amber" id="card-home">—</div>
+    </div>
   </div>
 
   <!-- Toast notification -->
@@ -326,7 +392,8 @@
     const today = new Date();
     let viewMonth       = today.getMonth() + 1;
     let viewYear        = today.getFullYear();
-    let availableMonths = []; // populated from sheet data
+    let availableMonths = [];
+    let selectedTable   = 'expenses';
 
     // ── Helpers ──
     const fmt = v => {
@@ -345,9 +412,10 @@
     }
 
     // ── Render cards ──
-    function renderCards(income, expenses, net) {
+    function renderCards(income, expenses, net, homeTotal) {
       document.getElementById('card-income').textContent   = fmt(income);
       document.getElementById('card-expenses').textContent = fmt(expenses);
+      document.getElementById('card-home').textContent     = fmt(homeTotal ?? 0);
       const netEl = document.getElementById('card-net');
       netEl.textContent = fmt(net);
       netEl.className   = 'value ' + colorClass(net);
@@ -371,7 +439,6 @@
         const res  = await fetch(`${GAS_URL}?action=summary&month=${viewMonth}&year=${viewYear}`);
         const data = await res.json();
 
-        // On first load, jump to the most recent month that has data
         if (availableMonths.length === 0 && data.availableMonths?.length) {
           availableMonths = data.availableMonths;
           const latest = availableMonths[availableMonths.length - 1];
@@ -385,7 +452,7 @@
           availableMonths = data.availableMonths;
         }
 
-        renderCards(data.income, data.expenses, data.net);
+        renderCards(data.income, data.expenses, data.net, data.homeTotal);
         updateNav();
         status.textContent = `Last synced: ${new Date().toLocaleTimeString()}`;
       } catch (err) {
@@ -394,6 +461,17 @@
       }
     }
 
+    // ── Table toggle ──
+    document.querySelectorAll('.toggle-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.toggle-opt').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedTable = btn.dataset.table;
+        const form = document.getElementById('entry-form');
+        form.className = selectedTable === 'home' ? 'mode-home' : 'mode-expenses';
+      });
+    });
+
     // ── Submit new entry ──
     document.getElementById('entry-form').addEventListener('submit', async e => {
       e.preventDefault();
@@ -401,15 +479,21 @@
       btn.disabled    = true;
       btn.textContent = 'Saving…';
 
-      const params = new URLSearchParams({
+      const base = {
         action:   'append',
+        table:    selectedTable,
         name:     document.getElementById('f-name').value.trim(),
         date:     document.getElementById('f-date').value,
         amount:   document.getElementById('f-amount').value,
-        category: document.getElementById('f-category').value.trim(),
         cardType: document.getElementById('f-cardtype').value.trim(),
-        expType:  document.getElementById('f-exptype').value,
-      });
+      };
+
+      const extra = selectedTable === 'home'
+        ? { description: document.getElementById('f-description').value.trim() }
+        : { category: document.getElementById('f-category').value.trim(),
+            expType:  document.getElementById('f-exptype').value };
+
+      const params = new URLSearchParams({ ...base, ...extra });
 
       try {
         const res  = await fetch(`${GAS_URL}?${params}`);
@@ -417,7 +501,6 @@
         if (data.success) {
           showToast('Entry saved!');
           closeForm();
-          // Refresh to the month of the new entry so it shows up
           const entryDate = new Date(document.getElementById('f-date').value + 'T00:00:00');
           viewMonth = entryDate.getMonth() + 1;
           viewYear  = entryDate.getFullYear();
@@ -433,9 +516,8 @@
       }
     });
 
-    // ── Form toggle ──
+    // ── Form open / close ──
     function openForm() {
-      // Default date to today
       document.getElementById('f-date').value = today.toISOString().slice(0, 10);
       document.getElementById('form-panel').classList.remove('hidden');
       document.getElementById('btn-toggle-form').textContent = '✕ Close';
@@ -446,21 +528,24 @@
       document.getElementById('form-panel').classList.add('hidden');
       document.getElementById('btn-toggle-form').textContent = '+ Add Entry';
       document.getElementById('entry-form').reset();
+      // Reset to My Expenses tab
+      selectedTable = 'expenses';
+      document.querySelectorAll('.toggle-opt').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-table="expenses"]').classList.add('active');
+      document.getElementById('entry-form').className = 'mode-expenses';
     }
 
     document.getElementById('btn-toggle-form').addEventListener('click', () => {
-      const hidden = document.getElementById('form-panel').classList.contains('hidden');
-      hidden ? openForm() : closeForm();
+      document.getElementById('form-panel').classList.contains('hidden') ? openForm() : closeForm();
     });
 
     document.getElementById('btn-cancel').addEventListener('click', closeForm);
 
-    // ── Month navigation (only moves between months that have data) ──
+    // ── Month navigation ──
     document.getElementById('btn-prev').addEventListener('click', () => {
       const idx = availableMonths.findIndex(m => m.month === viewMonth && m.year === viewYear);
       if (idx > 0) {
-        viewMonth = availableMonths[idx - 1].month;
-        viewYear  = availableMonths[idx - 1].year;
+        ({ month: viewMonth, year: viewYear } = availableMonths[idx - 1]);
         loadData();
       }
     });
@@ -468,8 +553,7 @@
     document.getElementById('btn-next').addEventListener('click', () => {
       const idx = availableMonths.findIndex(m => m.month === viewMonth && m.year === viewYear);
       if (idx !== -1 && idx < availableMonths.length - 1) {
-        viewMonth = availableMonths[idx + 1].month;
-        viewYear  = availableMonths[idx + 1].year;
+        ({ month: viewMonth, year: viewYear } = availableMonths[idx + 1]);
         loadData();
       }
     });
