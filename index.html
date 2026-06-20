@@ -324,8 +324,9 @@
                     'July','August','September','October','November','December'];
 
     const today = new Date();
-    let viewMonth = today.getMonth() + 1;
-    let viewYear  = today.getFullYear();
+    let viewMonth       = today.getMonth() + 1;
+    let viewYear        = today.getFullYear();
+    let availableMonths = []; // populated from sheet data
 
     // ── Helpers ──
     const fmt = v => {
@@ -355,8 +356,9 @@
     // ── Month nav ──
     function updateNav() {
       document.getElementById('month-label').textContent = `${MONTHS[viewMonth - 1]} ${viewYear}`;
-      const isLatest = viewYear === today.getFullYear() && viewMonth === today.getMonth() + 1;
-      document.getElementById('btn-next').disabled = isLatest;
+      const idx = availableMonths.findIndex(m => m.month === viewMonth && m.year === viewYear);
+      document.getElementById('btn-prev').disabled = idx <= 0;
+      document.getElementById('btn-next').disabled = idx === -1 || idx >= availableMonths.length - 1;
     }
 
     // ── Load data from GAS ──
@@ -368,7 +370,23 @@
       try {
         const res  = await fetch(`${GAS_URL}?action=summary&month=${viewMonth}&year=${viewYear}`);
         const data = await res.json();
+
+        // On first load, jump to the most recent month that has data
+        if (availableMonths.length === 0 && data.availableMonths?.length) {
+          availableMonths = data.availableMonths;
+          const latest = availableMonths[availableMonths.length - 1];
+          if (latest.month !== viewMonth || latest.year !== viewYear) {
+            viewMonth = latest.month;
+            viewYear  = latest.year;
+            loadData();
+            return;
+          }
+        } else if (data.availableMonths) {
+          availableMonths = data.availableMonths;
+        }
+
         renderCards(data.income, data.expenses, data.net);
+        updateNav();
         status.textContent = `Last synced: ${new Date().toLocaleTimeString()}`;
       } catch (err) {
         status.textContent = `Error: ${err.message}`;
@@ -437,17 +455,23 @@
 
     document.getElementById('btn-cancel').addEventListener('click', closeForm);
 
-    // ── Month navigation ──
+    // ── Month navigation (only moves between months that have data) ──
     document.getElementById('btn-prev').addEventListener('click', () => {
-      viewMonth--;
-      if (viewMonth < 1) { viewMonth = 12; viewYear--; }
-      loadData();
+      const idx = availableMonths.findIndex(m => m.month === viewMonth && m.year === viewYear);
+      if (idx > 0) {
+        viewMonth = availableMonths[idx - 1].month;
+        viewYear  = availableMonths[idx - 1].year;
+        loadData();
+      }
     });
 
     document.getElementById('btn-next').addEventListener('click', () => {
-      viewMonth++;
-      if (viewMonth > 12) { viewMonth = 1; viewYear++; }
-      loadData();
+      const idx = availableMonths.findIndex(m => m.month === viewMonth && m.year === viewYear);
+      if (idx !== -1 && idx < availableMonths.length - 1) {
+        viewMonth = availableMonths[idx + 1].month;
+        viewYear  = availableMonths[idx + 1].year;
+        loadData();
+      }
     });
 
     loadData();
