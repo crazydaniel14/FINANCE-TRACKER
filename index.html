@@ -638,20 +638,53 @@
     }
     #tx-search::placeholder { color: var(--text-3); }
 
-    /* ── Transaction list ── */
+    /* ── Transaction list redesign ── */
     .tx-list { display: flex; flex-direction: column; }
 
-    .tx-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      padding: 13px 0;
-      border-bottom: 1px solid var(--border);
-      gap: 12px;
+    .tx-date-header {
+      font-size: 0.58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-3);
+      padding: 18px 0 8px;
     }
-    .tx-row:last-child { border-bottom: none; }
+    .tx-date-header:first-child { padding-top: 4px; }
 
-    .tx-row-left  { flex: 1; min-width: 0; }
+    .tx-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .tx-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--border-2);
+      border-radius: 12px;
+      padding: 13px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: background 0.15s;
+    }
+    .tx-card:hover { background: var(--surface-2); }
+    .tx-card.essential   { border-left-color: var(--green); }
+    .tx-card.unnecessary { border-left-color: var(--red);   }
+    .tx-card.income      { border-left-color: var(--gold);  }
+    .tx-card.home-tx     { border-left-color: var(--blue);  }
+
+    .tx-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      letter-spacing: 0.01em;
+    }
+    .tx-icon.essential   { background: rgba(62,207,142,0.1);  color: var(--green); }
+    .tx-icon.unnecessary { background: rgba(224,85,85,0.1);   color: var(--red);   }
+    .tx-icon.income      { background: rgba(201,168,76,0.1);  color: var(--gold);  }
+    .tx-icon.home-tx     { background: rgba(96,144,208,0.1);  color: var(--blue);  }
+
+    .tx-body { flex: 1; min-width: 0; }
     .tx-name {
       font-size: 0.875rem;
       font-weight: 600;
@@ -659,47 +692,33 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
-    .tx-meta {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      align-items: center;
+    .tx-sub {
+      font-size: 0.7rem;
+      color: var(--text-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .tx-meta-text { font-size: 0.72rem; color: var(--text-2); }
-    .tx-badge {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      padding: 1px 6px;
-      font-size: 0.62rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-3);
-    }
-    .tx-badge.essential   { color: var(--green); border-color: rgba(62,207,142,0.25); background: rgba(62,207,142,0.07); }
-    .tx-badge.unnecessary { color: var(--red);   border-color: rgba(224,85,85,0.25);  background: rgba(224,85,85,0.07); }
-    .tx-badge.income      { color: var(--gold);  border-color: rgba(201,168,76,0.25); background: var(--gold-dim); }
-    .tx-badge.home        { color: var(--blue);  border-color: rgba(96,144,208,0.25); background: rgba(96,144,208,0.07); }
 
-    .tx-row-right  { text-align: right; flex-shrink: 0; }
+    .tx-right { text-align: right; flex-shrink: 0; }
     .tx-amount {
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
       color: var(--text);
-      margin-bottom: 4px;
+      white-space: nowrap;
     }
     .tx-amount.income { color: var(--green); }
-    .tx-date { font-size: 0.7rem; color: var(--text-3); }
 
     .tx-empty {
       text-align: center;
       padding: 44px 20px;
       color: var(--text-3);
       font-size: 0.85rem;
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -1173,6 +1192,38 @@
     }
   }
 
+  const CAT_ICON = {
+    'Food': 'FD', 'Transport': 'TR', 'Shopping': 'SH',
+    'Bills': 'BL', 'Health': 'HL', 'Entertainment': 'EN', 'Other': 'OT',
+  };
+
+  function txTypeClass(t) {
+    if (t.source === 'home') return 'home-tx';
+    return (t.expType || 'essential').toLowerCase();
+  }
+
+  function txIcon(t) {
+    if (t.source === 'home') return '⌂';
+    if ((t.expType || '').toLowerCase() === 'income') return '↑';
+    return CAT_ICON[t.category] || (t.category ? t.category.slice(0, 2).toUpperCase() : '?');
+  }
+
+  function txSub(t) {
+    if (t.source === 'home') return t.description || 'Home expense';
+    return [t.category, t.expType].filter(Boolean).join(' · ');
+  }
+
+  function formatDateHeader(iso) {
+    if (!iso) return 'Unknown Date';
+    const [y, m, d] = iso.split('-').map(Number);
+    const date      = new Date(y, m - 1, d);
+    const todayStr  = new Date().toDateString();
+    const yestDate  = new Date(); yestDate.setDate(yestDate.getDate() - 1);
+    if (date.toDateString() === todayStr) return 'Today';
+    if (date.toDateString() === yestDate.toDateString()) return 'Yesterday';
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' });
+  }
+
   function renderTransactions(txns) {
     const container = document.getElementById('tx-list');
     if (!txns.length) {
@@ -1180,68 +1231,63 @@
       return;
     }
 
+    // Group by date
+    const groups = {};
+    txns.forEach(t => { (groups[t.date || ''] ||= []).push(t); });
+    const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
     const list = document.createElement('div');
     list.className = 'tx-list';
 
-    txns.forEach(t => {
-      const isIncome = (t.expType || '').toLowerCase() === 'income';
-      const row      = document.createElement('div');
-      row.className  = 'tx-row';
+    sortedDates.forEach(dateKey => {
+      const header = document.createElement('div');
+      header.className   = 'tx-date-header';
+      header.textContent = formatDateHeader(dateKey);
+      list.appendChild(header);
 
-      const left  = document.createElement('div');
-      left.className = 'tx-row-left';
+      const group = document.createElement('div');
+      group.className = 'tx-group';
 
-      const name = document.createElement('div');
-      name.className   = 'tx-name';
-      name.textContent = t.name;
-      left.appendChild(name);
+      groups[dateKey].forEach(t => {
+        const isIncome  = (t.expType || '').toLowerCase() === 'income';
+        const typeClass = txTypeClass(t);
 
-      const meta = document.createElement('div');
-      meta.className = 'tx-meta';
+        const card = document.createElement('div');
+        card.className = `tx-card ${typeClass}`;
 
-      if (t.source === 'home') {
-        const badge = document.createElement('span');
-        badge.className   = 'tx-badge home';
-        badge.textContent = 'Home';
-        meta.appendChild(badge);
-        if (t.description) {
-          const desc = document.createElement('span');
-          desc.className   = 'tx-meta-text';
-          desc.textContent = t.description;
-          meta.appendChild(desc);
-        }
-      } else {
-        if (t.category) {
-          const cat = document.createElement('span');
-          cat.className   = 'tx-meta-text';
-          cat.textContent = t.category;
-          meta.appendChild(cat);
-        }
-        if (t.expType) {
-          const badge = document.createElement('span');
-          badge.className   = `tx-badge ${t.expType.toLowerCase()}`;
-          badge.textContent = t.expType;
-          meta.appendChild(badge);
-        }
-      }
-      left.appendChild(meta);
+        const icon = document.createElement('div');
+        icon.className   = `tx-icon ${typeClass}`;
+        icon.textContent = txIcon(t);
+        card.appendChild(icon);
 
-      const right  = document.createElement('div');
-      right.className = 'tx-row-right';
+        const body = document.createElement('div');
+        body.className = 'tx-body';
 
-      const amount = document.createElement('div');
-      amount.className   = 'tx-amount' + (isIncome ? ' income' : '');
-      amount.textContent = (isIncome ? '+' : '') + fmt(t.amount);
-      right.appendChild(amount);
+        const name = document.createElement('div');
+        name.className   = 'tx-name';
+        name.textContent = t.name;
+        body.appendChild(name);
 
-      const date = document.createElement('div');
-      date.className   = 'tx-date';
-      date.textContent = fmtDateShort(t.date);
-      right.appendChild(date);
+        const sub = document.createElement('div');
+        sub.className   = 'tx-sub';
+        sub.textContent = txSub(t);
+        body.appendChild(sub);
 
-      row.appendChild(left);
-      row.appendChild(right);
-      list.appendChild(row);
+        card.appendChild(body);
+
+        const right = document.createElement('div');
+        right.className = 'tx-right';
+
+        const amount = document.createElement('div');
+        amount.className   = `tx-amount${isIncome ? ' income' : ''}`;
+        amount.textContent = (isIncome ? '+' : '') + fmt(t.amount);
+        right.appendChild(amount);
+
+        card.appendChild(right);
+        group.appendChild(card);
+      });
+
+      list.appendChild(group);
     });
 
     container.innerHTML = '';
