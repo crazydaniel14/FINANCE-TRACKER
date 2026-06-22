@@ -199,6 +199,17 @@
     .amber { color: var(--amber); }
     .zero  { color: var(--text-3); }
 
+    /* ── Clickable summary card ── */
+    .card-clickable {
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card-clickable:hover {
+      border-color: rgba(212,144,58,0.35);
+      box-shadow: 0 0 0 1px rgba(212,144,58,0.12), 0 6px 20px rgba(0,0,0,0.35);
+    }
+    .card-clickable:active { transform: scale(0.98); transition: transform 0.1s; }
+
     /* ── Card-type spending ── */
     .section-label {
       font-size: 0.6rem;
@@ -720,6 +731,72 @@
       font-size: 0.85rem;
       line-height: 1.6;
     }
+
+    /* ── Plain-text message section ── */
+    .msg-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 22px 0 16px;
+    }
+    .msg-divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .msg-divider-label {
+      font-size: 0.58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-3);
+      white-space: nowrap;
+    }
+
+    .msg-box {
+      background: var(--bg);
+      border: 1.5px solid var(--border-2);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: "SF Mono", "Fira Code", "Menlo", monospace;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: var(--text-2);
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-bottom: 14px;
+      max-height: 220px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-2) transparent;
+      user-select: all;
+    }
+
+    .btn-copy {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-h) 100%);
+      border: none;
+      border-radius: 10px;
+      color: #07090f;
+      padding: 12px 20px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: opacity 0.2s, box-shadow 0.2s, transform 0.1s, background 0.25s;
+      box-shadow: 0 2px 12px var(--gold-glow);
+    }
+    .btn-copy:hover  { opacity: 0.88; box-shadow: 0 4px 18px var(--gold-glow); }
+    .btn-copy:active { transform: scale(0.98); }
+    .btn-copy.copied {
+      background: linear-gradient(135deg, var(--green) 0%, #52e0a0 100%);
+      box-shadow: 0 2px 12px rgba(62,207,142,0.3);
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -760,7 +837,7 @@
       <div class="label">Net</div>
       <div class="value" id="card-net">—</div>
     </div>
-    <div class="card">
+    <div class="card card-clickable" id="home-summary-card">
       <div class="label">Home Transactions</div>
       <div class="value amber" id="card-home">—</div>
     </div>
@@ -881,6 +958,45 @@
       </div>
 
     </form>
+  </div>
+</div>
+
+<!-- Home transactions + reimbursement modal -->
+<div class="modal-overlay" id="home-modal-overlay" role="dialog" aria-modal="true" aria-label="Home Expenses">
+  <div class="modal-card" id="home-modal-card">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="card-modal-meta">
+        <div class="card-modal-logo" style="background:rgba(212,144,58,0.12);font-size:1.1rem;color:var(--amber);">⌂</div>
+        <div>
+          <div class="card-modal-name">Home Expenses</div>
+          <div class="card-modal-total" id="home-modal-total"></div>
+        </div>
+      </div>
+      <button class="modal-close" id="home-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <!-- Transaction list -->
+    <div id="home-tx-list">
+      <div class="tx-empty"><span class="spinner"></span> Loading…</div>
+    </div>
+
+    <!-- Reimbursement message -->
+    <div class="msg-divider">
+      <div class="msg-divider-line"></div>
+      <div class="msg-divider-label">Reimbursement Message</div>
+      <div class="msg-divider-line"></div>
+    </div>
+
+    <div class="msg-box" id="home-msg-box"></div>
+
+    <button class="btn-copy" id="btn-copy-msg">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      Copy Message
+    </button>
   </div>
 </div>
 
@@ -1108,7 +1224,8 @@
 
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
-    if (document.getElementById('card-modal-overlay').classList.contains('visible')) closeCardModal();
+    if (document.getElementById('home-modal-overlay').classList.contains('visible')) closeHomeModal();
+    else if (document.getElementById('card-modal-overlay').classList.contains('visible')) closeCardModal();
     else if (document.getElementById('modal-overlay').classList.contains('visible')) closeForm();
   });
 
@@ -1311,6 +1428,157 @@
     });
     renderTransactions(filtered);
   }
+
+  // ── Home modal ──
+  let homeTxns = [];
+
+  function openHomeModal() {
+    homeTxns = [];
+    document.getElementById('home-tx-list').innerHTML = '<div class="tx-empty"><span class="spinner"></span> Loading…</div>';
+    document.getElementById('home-modal-total').textContent = '';
+    document.getElementById('home-msg-box').textContent     = '';
+    resetCopyBtn();
+    document.getElementById('home-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    fetchHomeTxns();
+  }
+
+  function closeHomeModal() {
+    document.getElementById('home-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+    homeTxns = [];
+  }
+
+  async function fetchHomeTxns() {
+    try {
+      const url  = `${GAS_URL}?action=transactions&source=home&month=${viewMonth}&year=${viewYear}`;
+      const data = await fetch(url).then(r => r.json());
+      homeTxns   = data.transactions || [];
+
+      const total = homeTxns.reduce((s, t) => s + t.amount, 0);
+      document.getElementById('home-modal-total').textContent =
+        `${fmt(total)} · ${homeTxns.length} transaction${homeTxns.length !== 1 ? 's' : ''} · ${MONTHS[viewMonth - 1]} ${viewYear}`;
+
+      renderHomeTxns(homeTxns);
+      document.getElementById('home-msg-box').textContent = generateReimbursementMsg(homeTxns);
+    } catch {
+      document.getElementById('home-tx-list').innerHTML = '<div class="tx-empty">Error loading transactions</div>';
+    }
+  }
+
+  function renderHomeTxns(txns) {
+    const container = document.getElementById('home-tx-list');
+    if (!txns.length) {
+      container.innerHTML = '<div class="tx-empty">No home transactions this month</div>';
+      return;
+    }
+
+    const groups = {};
+    txns.forEach(t => { (groups[t.date || ''] ||= []).push(t); });
+    const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+    const list = document.createElement('div');
+    list.className = 'tx-list';
+
+    sortedDates.forEach(dateKey => {
+      const header = document.createElement('div');
+      header.className   = 'tx-date-header';
+      header.textContent = formatDateHeader(dateKey);
+      list.appendChild(header);
+
+      const group = document.createElement('div');
+      group.className = 'tx-group';
+
+      groups[dateKey].forEach(t => {
+        const card = document.createElement('div');
+        card.className = 'tx-card home-tx';
+
+        const icon = document.createElement('div');
+        icon.className   = 'tx-icon home-tx';
+        icon.textContent = '⌂';
+        card.appendChild(icon);
+
+        const body = document.createElement('div');
+        body.className = 'tx-body';
+
+        const name = document.createElement('div');
+        name.className   = 'tx-name';
+        name.textContent = t.name;
+        body.appendChild(name);
+
+        const sub = document.createElement('div');
+        sub.className   = 'tx-sub';
+        sub.textContent = [t.cardType, t.description].filter(Boolean).join(' · ');
+        body.appendChild(sub);
+
+        card.appendChild(body);
+
+        const right = document.createElement('div');
+        right.className = 'tx-right';
+
+        const amount = document.createElement('div');
+        amount.className   = 'tx-amount';
+        amount.textContent = fmt(t.amount);
+        right.appendChild(amount);
+
+        card.appendChild(right);
+        group.appendChild(card);
+      });
+
+      list.appendChild(group);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(list);
+  }
+
+  function generateReimbursementMsg(txns) {
+    if (!txns.length) return '';
+    const heading = `Home Expenses — ${MONTHS[viewMonth - 1]} ${viewYear}`;
+    const lines   = [heading, ''];
+
+    txns.forEach(t => {
+      const card = t.cardType ? ` (${t.cardType})` : '';
+      lines.push(`• ${fmtDateShort(t.date)} — ${t.name} — ${fmt(t.amount)}${card}`);
+      if (t.description) lines.push(`  Note: ${t.description}`);
+    });
+
+    const total = txns.reduce((s, t) => s + t.amount, 0);
+    const count = txns.length;
+    lines.push('');
+    lines.push(`Total: ${fmt(total)} · ${count} item${count !== 1 ? 's' : ''}`);
+    return lines.join('\n');
+  }
+
+  function resetCopyBtn() {
+    const btn = document.getElementById('btn-copy-msg');
+    btn.classList.remove('copied');
+    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Message`;
+  }
+
+  document.getElementById('home-summary-card').addEventListener('click', openHomeModal);
+  document.getElementById('home-modal-close').addEventListener('click', closeHomeModal);
+  document.getElementById('home-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('home-modal-overlay')) closeHomeModal();
+  });
+
+  document.getElementById('btn-copy-msg').addEventListener('click', async () => {
+    const text = document.getElementById('home-msg-box').textContent;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    const btn = document.getElementById('btn-copy-msg');
+    btn.classList.add('copied');
+    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    setTimeout(resetCopyBtn, 2500);
+  });
 
   // Wire up ct-cards
   document.querySelectorAll('.ct-card').forEach((card, i) => {
