@@ -208,6 +208,10 @@
       border-color: rgba(212,144,58,0.35);
       box-shadow: 0 0 0 1px rgba(212,144,58,0.12), 0 6px 20px rgba(0,0,0,0.35);
     }
+    .card-clickable-blue:hover {
+      border-color: rgba(96,144,208,0.35);
+      box-shadow: 0 0 0 1px rgba(96,144,208,0.12), 0 6px 20px rgba(0,0,0,0.35);
+    }
     .card-clickable:active { transform: scale(0.98); transition: transform 0.1s; }
 
     /* ── Card-type spending ── */
@@ -825,7 +829,7 @@
 
   <!-- Summary cards -->
   <div class="cards">
-    <div class="card">
+    <div class="card card-clickable card-clickable-blue" id="income-summary-card">
       <div class="label">Total Income</div>
       <div class="value blue" id="card-income">—</div>
     </div>
@@ -958,6 +962,37 @@
       </div>
 
     </form>
+  </div>
+</div>
+
+<!-- Income transactions modal -->
+<div class="modal-overlay" id="income-modal-overlay" role="dialog" aria-modal="true" aria-label="Income Transactions">
+  <div class="modal-card" id="income-modal-card">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="card-modal-meta">
+        <div class="card-modal-logo" style="background:rgba(96,144,208,0.12);font-size:1.1rem;color:var(--blue);">↑</div>
+        <div>
+          <div class="card-modal-name">Income</div>
+          <div class="card-modal-total" id="income-modal-total"></div>
+        </div>
+      </div>
+      <button class="modal-close" id="income-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="tx-search-wrap">
+      <span class="tx-search-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
+        </svg>
+      </span>
+      <input type="text" id="income-search" placeholder="Search by name, date, amount or category…" autocomplete="off">
+    </div>
+
+    <div id="income-tx-list">
+      <div class="tx-empty"><span class="spinner"></span> Loading…</div>
+    </div>
   </div>
 </div>
 
@@ -1224,7 +1259,8 @@
 
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
-    if (document.getElementById('home-modal-overlay').classList.contains('visible')) closeHomeModal();
+    if (document.getElementById('income-modal-overlay').classList.contains('visible')) closeIncomeModal();
+    else if (document.getElementById('home-modal-overlay').classList.contains('visible')) closeHomeModal();
     else if (document.getElementById('card-modal-overlay').classList.contains('visible')) closeCardModal();
     else if (document.getElementById('modal-overlay').classList.contains('visible')) closeForm();
   });
@@ -1341,8 +1377,8 @@
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' });
   }
 
-  function renderTransactions(txns) {
-    const container = document.getElementById('tx-list');
+  function renderTransactions(txns, containerId = 'tx-list') {
+    const container = document.getElementById(containerId);
     if (!txns.length) {
       container.innerHTML = '<div class="tx-empty">No transactions found</div>';
       return;
@@ -1428,6 +1464,61 @@
     });
     renderTransactions(filtered);
   }
+
+  // ── Income modal ──
+  let allIncomeTxns = [];
+
+  function openIncomeModal() {
+    allIncomeTxns = [];
+    document.getElementById('income-tx-list').innerHTML = '<div class="tx-empty"><span class="spinner"></span> Loading…</div>';
+    document.getElementById('income-modal-total').textContent = '';
+    document.getElementById('income-search').value = '';
+    document.getElementById('income-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    fetchIncomeTxns();
+  }
+
+  function closeIncomeModal() {
+    document.getElementById('income-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+    allIncomeTxns = [];
+  }
+
+  async function fetchIncomeTxns() {
+    try {
+      const url  = `${GAS_URL}?action=transactions&source=expenses&month=${viewMonth}&year=${viewYear}`;
+      const data = await fetch(url).then(r => r.json());
+      allIncomeTxns = (data.transactions || []).filter(t => (t.expType || '').toLowerCase() === 'income');
+
+      const total = allIncomeTxns.reduce((s, t) => s + t.amount, 0);
+      document.getElementById('income-modal-total').textContent =
+        `+${fmt(total)} · ${MONTHS[viewMonth - 1]} ${viewYear}`;
+
+      renderTransactions(allIncomeTxns, 'income-tx-list');
+    } catch {
+      document.getElementById('income-tx-list').innerHTML = '<div class="tx-empty">Error loading income</div>';
+    }
+  }
+
+  function filterIncomeTxns(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) { renderTransactions(allIncomeTxns, 'income-tx-list'); return; }
+    const filtered = allIncomeTxns.filter(t =>
+      t.name.toLowerCase().includes(q) ||
+      (t.date || '').includes(q) ||
+      fmtDateShort(t.date).toLowerCase().includes(q) ||
+      fmt(t.amount).includes(q) ||
+      (t.category || '').toLowerCase().includes(q)
+    );
+    renderTransactions(filtered, 'income-tx-list');
+  }
+
+  document.getElementById('income-summary-card').addEventListener('click', openIncomeModal);
+  document.getElementById('income-modal-close').addEventListener('click', closeIncomeModal);
+  document.getElementById('income-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('income-modal-overlay')) closeIncomeModal();
+  });
+  document.getElementById('income-search').addEventListener('input', e => filterIncomeTxns(e.target.value));
 
   // ── Home modal ──
   let homeTxns = [];
