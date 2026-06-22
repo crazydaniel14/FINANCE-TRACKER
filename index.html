@@ -635,7 +635,7 @@
       pointer-events: none;
       display: flex; align-items: center;
     }
-    #tx-search {
+    .tx-search-input {
       width: 100%;
       background: var(--bg);
       border: 1.5px solid var(--border-2);
@@ -647,11 +647,11 @@
       outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
-    #tx-search:focus {
+    .tx-search-input:focus {
       border-color: var(--gold);
       box-shadow: 0 0 0 3px var(--gold-ring);
     }
-    #tx-search::placeholder { color: var(--text-3); }
+    .tx-search-input::placeholder { color: var(--text-3); }
 
     /* ── Transaction list redesign ── */
     .tx-list { display: flex; flex-direction: column; }
@@ -987,7 +987,7 @@
           <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
         </svg>
       </span>
-      <input type="text" id="income-search" placeholder="Search by name, date, amount or category…" autocomplete="off">
+      <input type="text" id="income-search" class="tx-search-input" placeholder="Search by name, date, amount or category…" autocomplete="off">
     </div>
 
     <div id="income-tx-list">
@@ -1059,7 +1059,7 @@
           <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
         </svg>
       </span>
-      <input type="text" id="tx-search" placeholder="Search by name, date, amount or category…" autocomplete="off">
+      <input type="text" id="tx-search" class="tx-search-input" placeholder="Search by name, date, amount or category…" autocomplete="off">
     </div>
 
     <div id="tx-list">
