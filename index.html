@@ -199,6 +199,16 @@
     .amber { color: var(--amber); }
     .zero  { color: var(--text-3); }
 
+    .carryover-label {
+      font-size: 0.68rem;
+      margin-top: 3px;
+      min-height: 1em;
+      font-weight: 500;
+      opacity: 0.85;
+    }
+    .carryover-label.green { color: var(--green); }
+    .carryover-label.red   { color: var(--red); }
+
     /* ── Clickable summary card ── */
     .card-clickable {
       cursor: pointer;
@@ -946,6 +956,7 @@
     <div class="card">
       <div class="label">Net</div>
       <div class="value" id="card-net">—</div>
+      <div id="card-net-carryover" class="carryover-label"></div>
     </div>
     <div class="card card-clickable" id="home-summary-card">
       <div class="label">Home Transactions</div>
@@ -1217,13 +1228,25 @@
     setTimeout(() => { t.className = 'toast' + (isError ? ' error' : ''); }, 3000);
   }
 
-  function renderCards(income, expenses, net, homeTotal, cardTotals) {
+  function renderCards(income, expenses, net, homeTotal, cardTotals, carryover, adjustedNet) {
     document.getElementById('card-income').textContent   = fmt(income);
     document.getElementById('card-expenses').textContent = fmt(expenses);
     document.getElementById('card-home').textContent     = fmt(homeTotal ?? 0);
+    const display = adjustedNet ?? net;
     const netEl = document.getElementById('card-net');
-    netEl.textContent = fmt(net);
-    netEl.className   = 'value ' + colorClass(net);
+    netEl.textContent = fmt(display);
+    netEl.className   = 'value ' + colorClass(display);
+
+    const carryEl = document.getElementById('card-net-carryover');
+    if (carryover && carryover !== 0) {
+      carryEl.textContent = carryover > 0
+        ? `+${fmt(carryover)} carried`
+        : `${fmt(carryover)} carried`;
+      carryEl.className = 'carryover-label ' + (carryover > 0 ? 'green' : 'red');
+    } else {
+      carryEl.textContent = '';
+      carryEl.className   = 'carryover-label';
+    }
 
     const ct = cardTotals || {};
     ['apple', 'wf', 'cash'].forEach(id => {
@@ -1264,7 +1287,7 @@
         availableMonths = data.availableMonths;
       }
 
-      renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals);
+      renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals, data.carryover ?? 0, data.adjustedNet ?? data.net);
       updateNav();
       status.textContent = `Last synced ${new Date().toLocaleTimeString()}`;
     } catch (err) {
