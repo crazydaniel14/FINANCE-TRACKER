@@ -1293,9 +1293,9 @@
   async function fetchCardTransactions() {
     if (!activeCardMeta) return;
     try {
-      const url  = `${GAS_URL}?action=transactions&cardType=${encodeURIComponent(activeCardMeta.key)}&month=${viewMonth}&year=${viewYear}`;
+      const url  = `${GAS_URL}?action=transactions&source=expenses&cardType=${encodeURIComponent(activeCardMeta.key)}&month=${viewMonth}&year=${viewYear}`;
       const data = await fetch(url).then(r => r.json());
-      allTransactions = data.transactions || [];
+      allTransactions = (data.transactions || []).filter(t => t.source === 'expenses');
 
       const total = allTransactions
         .filter(t => (t.expType || '').toLowerCase() !== 'income')
@@ -1453,7 +1453,7 @@
     try {
       const url  = `${GAS_URL}?action=transactions&source=home&month=${viewMonth}&year=${viewYear}`;
       const data = await fetch(url).then(r => r.json());
-      homeTxns   = data.transactions || [];
+      homeTxns   = (data.transactions || []).filter(t => t.source === 'home');
 
       const total = homeTxns.reduce((s, t) => s + t.amount, 0);
       document.getElementById('home-modal-total').textContent =
