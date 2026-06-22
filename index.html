@@ -736,6 +736,112 @@
       line-height: 1.6;
     }
 
+    /* ── Delete button on tx cards ── */
+    .tx-delete-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      width: 26px; height: 26px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      padding: 0;
+      opacity: 0.45;
+      transition: background 0.15s, color 0.15s, opacity 0.15s;
+    }
+    .tx-card:hover .tx-delete-btn { opacity: 0.7; }
+    .tx-delete-btn:hover {
+      opacity: 1 !important;
+      background: rgba(224,85,85,0.12);
+      color: var(--red);
+    }
+
+    /* ── Confirmation dialog ── */
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4,5,10,0.72);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      z-index: 150;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+    }
+    .confirm-overlay.visible { opacity: 1; pointer-events: all; }
+
+    .confirm-card {
+      background: #090b17;
+      border: 1px solid var(--border-2);
+      border-radius: 20px;
+      padding: 30px 24px 24px;
+      width: 100%;
+      max-width: 310px;
+      text-align: center;
+      transform: scale(0.93);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .confirm-overlay.visible .confirm-card { transform: scale(1); }
+
+    .confirm-icon {
+      font-size: 2.2rem;
+      line-height: 1;
+      margin-bottom: 14px;
+    }
+    .confirm-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .confirm-detail {
+      font-size: 0.78rem;
+      color: var(--text-2);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .confirm-detail strong { color: var(--text); font-weight: 600; }
+
+    .confirm-actions { display: flex; gap: 10px; }
+
+    .btn-confirm-cancel {
+      flex: 1;
+      background: transparent;
+      border: 1.5px solid var(--border-2);
+      border-radius: 10px;
+      color: var(--text-2);
+      padding: 11px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      font-family: inherit;
+    }
+    .btn-confirm-cancel:hover { background: var(--surface); color: var(--text); }
+
+    .btn-confirm-delete {
+      flex: 1;
+      background: var(--red);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      padding: 11px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      box-shadow: 0 2px 14px rgba(224,85,85,0.28);
+      font-family: inherit;
+    }
+    .btn-confirm-delete:hover  { opacity: 0.85; }
+    .btn-confirm-delete:active { transform: scale(0.97); }
+    .btn-confirm-delete:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
     /* ── Plain-text message section ── */
     .msg-divider {
       display: flex;
@@ -1068,6 +1174,19 @@
   </div>
 </div>
 
+<!-- Delete confirmation dialog -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-card">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">Delete Transaction?</div>
+    <div class="confirm-detail" id="confirm-detail">This will permanently remove this entry from your spreadsheet.</div>
+    <div class="confirm-actions">
+      <button class="btn-confirm-cancel" id="confirm-cancel">Cancel</button>
+      <button class="btn-confirm-delete" id="confirm-delete-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -1259,6 +1378,7 @@
 
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
+    if (document.getElementById('confirm-overlay').classList.contains('visible')) { closeConfirm(); return; }
     if (document.getElementById('income-modal-overlay').classList.contains('visible')) closeIncomeModal();
     else if (document.getElementById('home-modal-overlay').classList.contains('visible')) closeHomeModal();
     else if (document.getElementById('card-modal-overlay').classList.contains('visible')) closeCardModal();
@@ -1377,7 +1497,7 @@
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' });
   }
 
-  function renderTransactions(txns, containerId = 'tx-list') {
+  function renderTransactions(txns, containerId = 'tx-list', modalSource = 'card') {
     const container = document.getElementById(containerId);
     if (!txns.length) {
       container.innerHTML = '<div class="tx-empty">No transactions found</div>';
@@ -1437,6 +1557,14 @@
         right.appendChild(amount);
 
         card.appendChild(right);
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'tx-delete-btn';
+        delBtn.setAttribute('aria-label', 'Delete transaction');
+        delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        delBtn.addEventListener('click', e => { e.stopPropagation(); openConfirm(t, modalSource); });
+        card.appendChild(delBtn);
+
         group.appendChild(card);
       });
 
@@ -1494,7 +1622,7 @@
       document.getElementById('income-modal-total').textContent =
         `+${fmt(total)} · ${MONTHS[viewMonth - 1]} ${viewYear}`;
 
-      renderTransactions(allIncomeTxns, 'income-tx-list');
+      renderTransactions(allIncomeTxns, 'income-tx-list', 'income');
     } catch {
       document.getElementById('income-tx-list').innerHTML = '<div class="tx-empty">Error loading income</div>';
     }
@@ -1502,7 +1630,7 @@
 
   function filterIncomeTxns(query) {
     const q = query.trim().toLowerCase();
-    if (!q) { renderTransactions(allIncomeTxns, 'income-tx-list'); return; }
+    if (!q) { renderTransactions(allIncomeTxns, 'income-tx-list', 'income'); return; }
     const filtered = allIncomeTxns.filter(t =>
       t.name.toLowerCase().includes(q) ||
       (t.date || '').includes(q) ||
@@ -1510,7 +1638,7 @@
       fmt(t.amount).includes(q) ||
       (t.category || '').toLowerCase().includes(q)
     );
-    renderTransactions(filtered, 'income-tx-list');
+    renderTransactions(filtered, 'income-tx-list', 'income');
   }
 
   document.getElementById('income-summary-card').addEventListener('click', openIncomeModal);
@@ -1613,6 +1741,14 @@
         right.appendChild(amount);
 
         card.appendChild(right);
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'tx-delete-btn';
+        delBtn.setAttribute('aria-label', 'Delete transaction');
+        delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        delBtn.addEventListener('click', e => { e.stopPropagation(); openConfirm(t, 'home'); });
+        card.appendChild(delBtn);
+
         group.appendChild(card);
       });
 
@@ -1669,6 +1805,62 @@
     btn.classList.add('copied');
     btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
     setTimeout(resetCopyBtn, 2500);
+  });
+
+  // ── Delete confirmation ──
+  let pendingDeleteTxn   = null;
+  let pendingModalSource = null;
+
+  function openConfirm(txn, modalSource) {
+    pendingDeleteTxn   = txn;
+    pendingModalSource = modalSource;
+    document.getElementById('confirm-detail').innerHTML =
+      `<strong>${txn.name}</strong> (${fmt(txn.amount)}) will be permanently removed from your spreadsheet.`;
+    document.getElementById('confirm-overlay').classList.add('visible');
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('visible');
+    const btn = document.getElementById('confirm-delete-btn');
+    btn.disabled    = false;
+    btn.textContent = 'Delete';
+    pendingDeleteTxn   = null;
+    pendingModalSource = null;
+  }
+
+  async function executeDelete() {
+    if (!pendingDeleteTxn) return;
+    const btn = document.getElementById('confirm-delete-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Deleting…';
+
+    const { source, rowIndex } = pendingDeleteTxn;
+    const modalSource = pendingModalSource;
+
+    try {
+      const url  = `${GAS_URL}?action=delete&source=${encodeURIComponent(source)}&rowIndex=${rowIndex}`;
+      const data = await fetch(url).then(r => r.json());
+
+      if (data.success) {
+        closeConfirm();
+        if (modalSource === 'card')        fetchCardTransactions();
+        else if (modalSource === 'income') fetchIncomeTxns();
+        else if (modalSource === 'home')   fetchHomeTxns();
+        loadData();
+      } else {
+        showToast(data.error || 'Delete failed', true);
+        closeConfirm();
+      }
+    } catch {
+      showToast('Error deleting transaction', true);
+      closeConfirm();
+    }
+  }
+
+  document.getElementById('confirm-cancel').addEventListener('click', closeConfirm);
+  document.getElementById('confirm-delete-btn').addEventListener('click', executeDelete);
+  document.getElementById('confirm-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('confirm-overlay')) closeConfirm();
   });
 
   // Wire up ct-cards
