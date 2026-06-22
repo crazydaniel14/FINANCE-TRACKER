@@ -761,7 +761,7 @@
       font-family: "SF Mono", "Fira Code", "Menlo", monospace;
       font-size: 0.78rem;
       line-height: 1.7;
-      color: var(--text-2);
+      color: var(--text);
       white-space: pre-wrap;
       word-break: break-word;
       margin-bottom: 14px;
@@ -1457,7 +1457,7 @@
 
       const total = homeTxns.reduce((s, t) => s + t.amount, 0);
       document.getElementById('home-modal-total').textContent =
-        `${fmt(total)} · ${homeTxns.length} transaction${homeTxns.length !== 1 ? 's' : ''} · ${MONTHS[viewMonth - 1]} ${viewYear}`;
+        `${fmt(total)} · ${MONTHS[viewMonth - 1]} ${viewYear}`;
 
       renderHomeTxns(homeTxns);
       document.getElementById('home-msg-box').textContent = generateReimbursementMsg(homeTxns);
@@ -1546,7 +1546,7 @@
     const total = txns.reduce((s, t) => s + t.amount, 0);
     const count = txns.length;
     lines.push('');
-    lines.push(`Total: ${fmt(total)} · ${count} item${count !== 1 ? 's' : ''}`);
+    lines.push(`Total: ${fmt(total)} · ${count} transaction${count !== 1 ? 's' : ''}`);
     return lines.join('\n');
   }
 
