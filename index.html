@@ -1372,6 +1372,11 @@
   let selectedTable   = 'expenses';
   let selectedExpType = 'Essential';
   const CARD_IDS = ['apple', 'wf', 'cash'];
+  const CARD_KEYS = {
+    apple: 'Apple',
+    wf:    'Wells Fargo',
+    cash:  'Cash',
+  };
   const WHEEL_RADIUS = 48;
   const WHEEL_CIRCUMFERENCE = 2 * Math.PI * WHEEL_RADIUS;
   const paymentState = {
@@ -1379,6 +1384,7 @@
     wf:    { owed: 0, paid: 0 },
     cash:  { owed: 0, paid: 0 },
   };
+  const paymentSaveTimers = {};
 
   const fmt = v => {
     const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[$,]/g, ''));
@@ -1396,23 +1402,34 @@
     return Number.isFinite(n) ? n : 0;
   }
 
-  function paymentStorageKey(cardId) {
-    return `payment:${viewYear}-${String(viewMonth).padStart(2, '0')}:${cardId}`;
+  function queuePaymentSave(cardId) {
+    clearTimeout(paymentSaveTimers[cardId]);
+    paymentSaveTimers[cardId] = setTimeout(() => savePayment(cardId), 450);
   }
 
-  function readPayment(cardId) {
-    const raw = localStorage.getItem(paymentStorageKey(cardId));
-    return raw === null ? 0 : moneyNumber(raw);
-  }
+  async function savePayment(cardId) {
+    const state = paymentState[cardId];
+    const params = new URLSearchParams({
+      action: 'setPayment',
+      month: viewMonth,
+      year: viewYear,
+      cardType: CARD_KEYS[cardId],
+      amount: state.paid.toFixed(2),
+    });
 
-  function savePayment(cardId) {
-    localStorage.setItem(paymentStorageKey(cardId), paymentState[cardId].paid.toFixed(2));
+    try {
+      const res = await fetch(`${GAS_URL}?${params}`);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Payment save failed');
+    } catch (err) {
+      showToast(`Payment not saved: ${err.message}`, true);
+    }
   }
 
   function setPayment(cardId, paid, shouldSave = true) {
     const state = paymentState[cardId];
     state.paid = Math.round(clamp(moneyNumber(paid), 0, state.owed) * 100) / 100;
-    if (shouldSave) savePayment(cardId);
+    if (shouldSave) queuePaymentSave(cardId);
     renderPaymentWheel(cardId);
   }
 
@@ -1454,9 +1471,9 @@
     setPayment(cardId, paymentState[cardId].owed * (normalized / (Math.PI * 2)));
   }
 
-  function updatePaymentOwed(cardId, owed) {
+  function updatePaymentOwed(cardId, owed, paid) {
     paymentState[cardId].owed = Math.max(moneyNumber(owed), 0);
-    setPayment(cardId, readPayment(cardId), false);
+    setPayment(cardId, paid, false);
   }
 
   function showToast(msg, isError = false) {
@@ -1466,7 +1483,7 @@
     setTimeout(() => { t.className = 'toast' + (isError ? ' error' : ''); }, 3000);
   }
 
-  function renderCards(income, expenses, net, homeTotal, cardTotals, carryover, adjustedNet) {
+  function renderCards(income, expenses, net, homeTotal, cardTotals, cardPayments, carryover, adjustedNet) {
     document.getElementById('card-income').textContent   = fmt(income);
     document.getElementById('card-expenses').textContent = fmt(expenses);
     document.getElementById('card-home').textContent     = fmt(homeTotal ?? 0);
@@ -1487,13 +1504,14 @@
     }
 
     const ct = cardTotals || {};
+    const payments = cardPayments || {};
     CARD_IDS.forEach(id => {
-      const key = id === 'apple' ? 'Apple' : id === 'wf' ? 'Wells Fargo' : 'Cash';
+      const key = CARD_KEYS[id];
       const val = ct[key] ?? 0;
       const el  = document.getElementById('ct-' + id);
       el.textContent = fmt(val);
       el.className   = 'ct-amount' + (val === 0 ? ' zero' : '');
-      updatePaymentOwed(id, val);
+      updatePaymentOwed(id, val, payments[key] ?? 0);
     });
   }
 
@@ -1526,7 +1544,7 @@
         availableMonths = data.availableMonths;
       }
 
-      renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals, data.carryover ?? 0, data.adjustedNet ?? data.net);
+      renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals, data.cardPayments, data.carryover ?? 0, data.adjustedNet ?? data.net);
       updateNav();
       status.textContent = `Last synced ${new Date().toLocaleTimeString()}`;
     } catch (err) {
