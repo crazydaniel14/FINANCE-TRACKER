@@ -236,9 +236,10 @@
 
     .card-type-row {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 1fr;
       gap: 12px;
     }
+    @media (min-width: 560px) { .card-type-row { grid-template-columns: repeat(3, 1fr); } }
 
     .ct-card {
       background: var(--surface);
@@ -305,6 +306,115 @@
       text-align: center;
     }
     .ct-amount.zero { color: var(--text-3); }
+
+    .payment-wheel {
+      width: min(150px, 100%);
+      aspect-ratio: 1;
+      position: relative;
+      display: grid;
+      place-items: center;
+      touch-action: none;
+      cursor: grab;
+      user-select: none;
+      margin-top: 2px;
+    }
+    .payment-wheel:active { cursor: grabbing; }
+    .payment-wheel svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+    .payment-wheel .wheel-track {
+      fill: none;
+      stroke: var(--border-2);
+      stroke-width: 12;
+    }
+    .payment-wheel .wheel-fill {
+      fill: none;
+      stroke: var(--green);
+      stroke-width: 12;
+      stroke-linecap: round;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+      transition: stroke-dashoffset 0.12s ease;
+    }
+    .payment-wheel .wheel-thumb {
+      fill: var(--green);
+      stroke: #07120d;
+      stroke-width: 3;
+      transform-origin: 50% 50%;
+      transition: transform 0.12s ease;
+    }
+    .wheel-center {
+      position: absolute;
+      inset: 24%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+    }
+    .wheel-paid-label {
+      font-size: 0.54rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-3);
+      margin-bottom: 4px;
+    }
+    .wheel-paid-value {
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: var(--green);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+    }
+    .wheel-remaining {
+      font-size: 0.62rem;
+      color: var(--text-2);
+      font-variant-numeric: tabular-nums;
+      margin-top: 4px;
+      line-height: 1.2;
+    }
+    .payment-input-wrap {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg);
+      border: 1px solid var(--border-2);
+      border-radius: 10px;
+      padding: 8px 10px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      cursor: text;
+    }
+    .payment-input-wrap:focus-within {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(62,207,142,0.12);
+    }
+    .payment-input-wrap span {
+      color: var(--text-3);
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .payment-input {
+      min-width: 0;
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      cursor: text;
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .payment-input::placeholder { color: var(--text-3); }
 
     /* ── Modal overlay ── */
     .modal-overlay {
@@ -973,6 +1083,22 @@
         <img src="Images/Apple logo.png" alt="Apple">
       </div>
       <div class="ct-amount" id="ct-apple">—</div>
+      <div class="payment-wheel" data-card="apple" role="slider" aria-label="Apple paid amount" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" tabindex="0">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="wheel-track" cx="60" cy="60" r="48"></circle>
+          <circle class="wheel-fill" cx="60" cy="60" r="48"></circle>
+          <circle class="wheel-thumb" cx="60" cy="12" r="7"></circle>
+        </svg>
+        <div class="wheel-center">
+          <div class="wheel-paid-label">Paid</div>
+          <div class="wheel-paid-value" id="wheel-apple-paid">—</div>
+          <div class="wheel-remaining" id="wheel-apple-left">— left</div>
+        </div>
+      </div>
+      <label class="payment-input-wrap" for="pay-apple">
+        <span>$</span>
+        <input class="payment-input" id="pay-apple" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Paid amount">
+      </label>
     </div>
 
     <div class="ct-card">
@@ -980,6 +1106,22 @@
         <img src="Images/WF.png" alt="Wells Fargo">
       </div>
       <div class="ct-amount" id="ct-wf">—</div>
+      <div class="payment-wheel" data-card="wf" role="slider" aria-label="Wells Fargo paid amount" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" tabindex="0">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="wheel-track" cx="60" cy="60" r="48"></circle>
+          <circle class="wheel-fill" cx="60" cy="60" r="48"></circle>
+          <circle class="wheel-thumb" cx="60" cy="12" r="7"></circle>
+        </svg>
+        <div class="wheel-center">
+          <div class="wheel-paid-label">Paid</div>
+          <div class="wheel-paid-value" id="wheel-wf-paid">—</div>
+          <div class="wheel-remaining" id="wheel-wf-left">— left</div>
+        </div>
+      </div>
+      <label class="payment-input-wrap" for="pay-wf">
+        <span>$</span>
+        <input class="payment-input" id="pay-wf" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Paid amount">
+      </label>
     </div>
 
     <div class="ct-card">
@@ -987,6 +1129,22 @@
         <img src="Images/cash.png" alt="Cash">
       </div>
       <div class="ct-amount" id="ct-cash">—</div>
+      <div class="payment-wheel" data-card="cash" role="slider" aria-label="Cash paid amount" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" tabindex="0">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="wheel-track" cx="60" cy="60" r="48"></circle>
+          <circle class="wheel-fill" cx="60" cy="60" r="48"></circle>
+          <circle class="wheel-thumb" cx="60" cy="12" r="7"></circle>
+        </svg>
+        <div class="wheel-center">
+          <div class="wheel-paid-label">Paid</div>
+          <div class="wheel-paid-value" id="wheel-cash-paid">—</div>
+          <div class="wheel-remaining" id="wheel-cash-left">— left</div>
+        </div>
+      </div>
+      <label class="payment-input-wrap" for="pay-cash">
+        <span>$</span>
+        <input class="payment-input" id="pay-cash" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Paid amount">
+      </label>
     </div>
 
   </div>
@@ -1213,6 +1371,14 @@
   let availableMonths = [];
   let selectedTable   = 'expenses';
   let selectedExpType = 'Essential';
+  const CARD_IDS = ['apple', 'wf', 'cash'];
+  const WHEEL_RADIUS = 48;
+  const WHEEL_CIRCUMFERENCE = 2 * Math.PI * WHEEL_RADIUS;
+  const paymentState = {
+    apple: { owed: 0, paid: 0 },
+    wf:    { owed: 0, paid: 0 },
+    cash:  { owed: 0, paid: 0 },
+  };
 
   const fmt = v => {
     const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[$,]/g, ''));
@@ -1220,6 +1386,78 @@
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
   };
   const colorClass = n => n > 0 ? 'green' : n < 0 ? 'red' : 'zero';
+
+  function clamp(n, min, max) {
+    return Math.min(Math.max(n, min), max);
+  }
+
+  function moneyNumber(value) {
+    const n = typeof value === 'number' ? value : parseFloat(String(value).replace(/[$,]/g, ''));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function paymentStorageKey(cardId) {
+    return `payment:${viewYear}-${String(viewMonth).padStart(2, '0')}:${cardId}`;
+  }
+
+  function readPayment(cardId) {
+    const raw = localStorage.getItem(paymentStorageKey(cardId));
+    return raw === null ? 0 : moneyNumber(raw);
+  }
+
+  function savePayment(cardId) {
+    localStorage.setItem(paymentStorageKey(cardId), paymentState[cardId].paid.toFixed(2));
+  }
+
+  function setPayment(cardId, paid, shouldSave = true) {
+    const state = paymentState[cardId];
+    state.paid = Math.round(clamp(moneyNumber(paid), 0, state.owed) * 100) / 100;
+    if (shouldSave) savePayment(cardId);
+    renderPaymentWheel(cardId);
+  }
+
+  function renderPaymentWheel(cardId) {
+    const state = paymentState[cardId];
+    const owed = Math.max(state.owed, 0);
+    const paid = clamp(state.paid, 0, owed);
+    const ratio = owed > 0 ? paid / owed : 0;
+    const wheel = document.querySelector(`.payment-wheel[data-card="${cardId}"]`);
+    const fill = wheel.querySelector('.wheel-fill');
+    const thumb = wheel.querySelector('.wheel-thumb');
+    const input = document.getElementById(`pay-${cardId}`);
+    const left = Math.max(owed - paid, 0);
+
+    fill.style.strokeDasharray = WHEEL_CIRCUMFERENCE;
+    fill.style.strokeDashoffset = WHEEL_CIRCUMFERENCE * (1 - ratio);
+    thumb.style.transform = `rotate(${ratio * 360}deg)`;
+
+    wheel.setAttribute('aria-valuemax', owed.toFixed(2));
+    wheel.setAttribute('aria-valuenow', paid.toFixed(2));
+    wheel.setAttribute('aria-valuetext', `${fmt(paid)} paid of ${fmt(owed)}`);
+    input.max = owed.toFixed(2);
+    input.disabled = owed <= 0;
+    if (document.activeElement !== input) {
+      input.value = paid > 0 ? paid.toFixed(2) : '';
+    }
+
+    document.getElementById(`wheel-${cardId}-paid`).textContent = fmt(paid);
+    document.getElementById(`wheel-${cardId}-left`).textContent = `${fmt(left)} left`;
+  }
+
+  function setPaymentFromPointer(cardId, event) {
+    const wheel = event.currentTarget;
+    const rect = wheel.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const angle = Math.atan2(event.clientY - cy, event.clientX - cx);
+    const normalized = (angle + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2);
+    setPayment(cardId, paymentState[cardId].owed * (normalized / (Math.PI * 2)));
+  }
+
+  function updatePaymentOwed(cardId, owed) {
+    paymentState[cardId].owed = Math.max(moneyNumber(owed), 0);
+    setPayment(cardId, readPayment(cardId), false);
+  }
 
   function showToast(msg, isError = false) {
     const t = document.getElementById('toast');
@@ -1249,12 +1487,13 @@
     }
 
     const ct = cardTotals || {};
-    ['apple', 'wf', 'cash'].forEach(id => {
+    CARD_IDS.forEach(id => {
       const key = id === 'apple' ? 'Apple' : id === 'wf' ? 'Wells Fargo' : 'Cash';
       const val = ct[key] ?? 0;
       const el  = document.getElementById('ct-' + id);
       el.textContent = fmt(val);
       el.className   = 'ct-amount' + (val === 0 ? ' zero' : '');
+      updatePaymentOwed(id, val);
     });
   }
 
@@ -1888,7 +2127,52 @@
 
   // Wire up ct-cards
   document.querySelectorAll('.ct-card').forEach((card, i) => {
-    card.addEventListener('click', () => openCardModal(['apple', 'wf', 'cash'][i]));
+    card.addEventListener('click', () => openCardModal(CARD_IDS[i]));
+  });
+
+  document.querySelectorAll('.payment-wheel').forEach(wheel => {
+    const cardId = wheel.dataset.card;
+
+    wheel.addEventListener('click', e => e.stopPropagation());
+    wheel.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      wheel.setPointerCapture(e.pointerId);
+      setPaymentFromPointer(cardId, e);
+    });
+    wheel.addEventListener('pointermove', e => {
+      if (!wheel.hasPointerCapture(e.pointerId)) return;
+      e.preventDefault();
+      setPaymentFromPointer(cardId, e);
+    });
+    wheel.addEventListener('keydown', e => {
+      const state = paymentState[cardId];
+      const step = Math.max(1, Math.round(state.owed / 100));
+      if (['ArrowRight', 'ArrowUp'].includes(e.key)) {
+        e.preventDefault();
+        setPayment(cardId, state.paid + step);
+      } else if (['ArrowLeft', 'ArrowDown'].includes(e.key)) {
+        e.preventDefault();
+        setPayment(cardId, state.paid - step);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        setPayment(cardId, 0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        setPayment(cardId, state.owed);
+      }
+    });
+  });
+
+  document.querySelectorAll('.payment-input-wrap').forEach(wrap => {
+    wrap.addEventListener('click', e => e.stopPropagation());
+  });
+
+  document.querySelectorAll('.payment-input').forEach(input => {
+    const cardId = input.id.replace('pay-', '');
+    input.addEventListener('click', e => e.stopPropagation());
+    input.addEventListener('input', e => setPayment(cardId, e.target.value));
+    input.addEventListener('blur', () => renderPaymentWheel(cardId));
   });
 
   document.getElementById('card-modal-close').addEventListener('click', closeCardModal);
