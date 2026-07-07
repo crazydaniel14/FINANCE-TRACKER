@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Finances Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1027,6 +1028,167 @@
       box-shadow: 0 2px 12px rgba(62,207,142,0.3);
       opacity: 1;
     }
+
+    /* ── Cashflow Visualization ── */
+    .cashflow-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    @media (min-width: 580px) {
+      .cashflow-grid {
+        grid-template-columns: 1.1fr 0.9fr;
+      }
+    }
+
+    .cashflow-card {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .cashflow-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, rgba(255,255,255,0.02) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .budget-indicator {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .budget-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+
+    .budget-bar-outer {
+      background: var(--bg);
+      border: 1px solid var(--border-2);
+      height: 14px;
+      border-radius: 7px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .budget-bar-inner {
+      background: linear-gradient(90deg, var(--green) 0%, #52e0a0 100%);
+      height: 100%;
+      width: 0%;
+      border-radius: 6px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .budget-bar-inner.warning {
+      background: linear-gradient(90deg, var(--amber) 0%, #e8a858 100%);
+    }
+    .budget-bar-inner.danger {
+      background: linear-gradient(90deg, var(--red) 0%, #f67272 100%);
+    }
+
+    .budget-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-2) transparent;
+    }
+
+    .legend-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.74rem;
+    }
+
+    .legend-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-2);
+    }
+
+    .legend-color {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .legend-value {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+
+    .budget-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .metric-subcard {
+      background: var(--bg);
+      border: 1px solid var(--border-2);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+    .metric-subcard::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, rgba(255,255,255,0.01) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .metric-subcard .metric-label {
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-2);
+      font-weight: 700;
+    }
+    .metric-subcard .metric-val {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .metric-subcard .metric-percent {
+      font-size: 0.64rem;
+      color: var(--text-3);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -1071,6 +1233,53 @@
     <div class="card card-clickable" id="home-summary-card">
       <div class="label">Home Transactions</div>
       <div class="value amber" id="card-home">—</div>
+    </div>
+  </div>
+
+  <!-- Cashflow & Budgeting -->
+  <div class="section-label">Cashflow & Budgeting</div>
+  <div class="cashflow-grid">
+    <!-- Left Panel: Spending Breakdown Donut -->
+    <div class="cashflow-card">
+      <div class="label" style="margin-bottom: 0;">Spending by Category</div>
+      <div class="chart-wrapper">
+        <canvas id="categoryChart"></canvas>
+      </div>
+      <div class="budget-legend" id="categoryLegend">
+        <!-- Legend list will be rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Right Panel: Budget Distribution & Metrics -->
+    <div class="cashflow-card" style="justify-content: space-between;">
+      <div class="budget-indicator">
+        <div class="label" style="margin-bottom: 4px;">Inflow vs. Outflow</div>
+        <div class="budget-bar-labels">
+          <span id="budget-outflow-val">$0.00 spent</span>
+          <span id="budget-inflow-val">of $0.00</span>
+        </div>
+        <div class="budget-bar-outer">
+          <div class="budget-bar-inner" id="budget-bar-fill"></div>
+        </div>
+        <div class="carryover-label" id="budget-saving-rate" style="font-size: 0.68rem; margin-top: 2px;"></div>
+      </div>
+
+      <div>
+        <div class="label" style="margin-bottom: 6px;">Budget Allocation</div>
+        <div class="budget-metrics">
+          <div class="metric-subcard">
+            <span class="metric-label">Needs</span>
+            <span class="metric-val" id="budget-needs-val">$0.00</span>
+            <span class="metric-percent" id="budget-needs-pct">0% of budget</span>
+          </div>
+          <div class="metric-subcard">
+            <span class="metric-label">Wants</span>
+            <span class="metric-val" id="budget-wants-val">$0.00</span>
+            <span class="metric-percent" id="budget-wants-pct">0% of budget</span>
+          </div>
+        </div>
+        <div class="carryover-label" id="budget-ratio-message" style="font-size: 0.64rem; margin-top: 6px; color: var(--text-2); min-height: auto; white-space: normal; line-height: 1.35;"></div>
+      </div>
     </div>
   </div>
 
@@ -1515,6 +1724,189 @@
     });
   }
 
+  // ── Cashflow Chart & Budget Rendering ──
+  let categoryChartInstance = null;
+
+  const CAT_COLORS = {
+    'Food':          '#3ecf8e', // Green
+    'Transport':     '#6090d0', // Blue
+    'Shopping':      '#c9a84c', // Gold
+    'Bills':         '#d4903a', // Amber
+    'Health':        '#e05555', // Red
+    'Entertainment': '#a262f0', // Purple
+    'Home Expenses': '#4d5b7c', // Slate
+    'Other':         '#7b8daa', // Muted steel
+  };
+
+  function getCategoryColor(cat) {
+    return CAT_COLORS[cat] || '#384060';
+  }
+
+  function renderCashflow(data) {
+    // 1. Prepare Category Totals
+    const categoryTotals = { ...(data.categoryTotals || {}) };
+    
+    // Explicitly add Home Expenses if we have home totals
+    if (data.homeTotal > 0) {
+      categoryTotals['Home Expenses'] = data.homeTotal;
+    }
+    
+    // Sort categories descending by amount
+    const sortedCats = Object.entries(categoryTotals)
+      .filter(([, amt]) => amt > 0)
+      .sort((a, b) => b[1] - a[1]);
+      
+    const labels = sortedCats.map(([cat]) => cat);
+    const values = sortedCats.map(([, amt]) => amt);
+    const colors = sortedCats.map(([cat]) => getCategoryColor(cat));
+    
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    if (categoryChartInstance) {
+      categoryChartInstance.destroy();
+    }
+    
+    const legendContainer = document.getElementById('categoryLegend');
+    
+    if (sortedCats.length === 0) {
+      legendContainer.innerHTML = '<div class="tx-empty" style="padding: 10px 0;">No expenses recorded this month</div>';
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    } else {
+      categoryChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors,
+            borderColor: '#0c0e1b', // Matches var(--surface)
+            borderWidth: 2,
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: '#0c0e1b',
+              titleColor: '#edf1f8',
+              bodyColor: '#7b8daa',
+              borderColor: '#181c2c',
+              borderWidth: 1,
+              padding: 10,
+              displayColors: true,
+              callbacks: {
+                label: function(context) {
+                  const val = context.raw;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const pct = ((val / total) * 100).toFixed(1);
+                  return ` ${context.label}: ${fmt(val)} (${pct}%)`;
+                }
+              }
+            }
+          },
+          cutout: '70%'
+        }
+      });
+      
+      // Render Custom Legend
+      legendContainer.innerHTML = '';
+      const totalSpend = values.reduce((a, b) => a + b, 0);
+      
+      sortedCats.forEach(([cat, amt]) => {
+        const pct = ((amt / totalSpend) * 100).toFixed(1);
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+          <div class="legend-left">
+            <span class="legend-color" style="background-color: ${getCategoryColor(cat)}"></span>
+            <span>${cat}</span>
+          </div>
+          <div class="legend-value">${fmt(amt)} <span style="font-size: 0.65rem; color: var(--text-3); font-weight: 500;">(${pct}%)</span></div>
+        `;
+        legendContainer.appendChild(item);
+      });
+    }
+
+    // 2. Render Inflow vs. Outflow progress bar
+    const inflow = data.income || 0;
+    const outflow = (data.expenses || 0) + (data.homeTotal || 0);
+    
+    document.getElementById('budget-outflow-val').textContent = `${fmt(outflow)} spent`;
+    document.getElementById('budget-inflow-val').textContent = inflow > 0 ? `of ${fmt(inflow)}` : 'no income';
+    
+    let spentPercent = 0;
+    if (inflow > 0) {
+      spentPercent = clamp((outflow / inflow) * 100, 0, 100);
+    } else if (outflow > 0) {
+      spentPercent = 100;
+    }
+    
+    const fill = document.getElementById('budget-bar-fill');
+    fill.style.width = `${spentPercent}%`;
+    fill.className = 'budget-bar-inner';
+    if (spentPercent >= 90) {
+      fill.classList.add('danger');
+    } else if (spentPercent >= 70) {
+      fill.classList.add('warning');
+    }
+    
+    const savingsRateEl = document.getElementById('budget-saving-rate');
+    if (inflow > 0) {
+      const savings = inflow - outflow;
+      const savingsRate = (savings / inflow) * 100;
+      if (savings >= 0) {
+        savingsRateEl.textContent = `Savings rate: ${savingsRate.toFixed(1)}% (+${fmt(savings)})`;
+        savingsRateEl.className = 'carryover-label green';
+      } else {
+        savingsRateEl.textContent = `Deficit: ${Math.abs(savingsRate).toFixed(1)}% over budget (${fmt(Math.abs(savings))})`;
+        savingsRateEl.className = 'carryover-label red';
+      }
+    } else {
+      savingsRateEl.textContent = outflow > 0 ? `Total spending: ${fmt(outflow)}` : 'No cashflow data';
+      savingsRateEl.className = 'carryover-label';
+    }
+
+    // 3. Render Needs vs. Wants distribution
+    const typeTotals = data.typeTotals || { essential: 0, unnecessary: 0, home: data.homeTotal || 0 };
+    const needs = (typeTotals.essential || 0) + (typeTotals.home || 0);
+    const wants = typeTotals.unnecessary || 0;
+    const totalBudget = needs + wants;
+    
+    document.getElementById('budget-needs-val').textContent = fmt(needs);
+    document.getElementById('budget-wants-val').textContent = fmt(wants);
+    
+    let needsPct = 0;
+    let wantsPct = 0;
+    if (totalBudget > 0) {
+      needsPct = Math.round((needs / totalBudget) * 100);
+      wantsPct = Math.round((wants / totalBudget) * 100);
+    }
+    
+    document.getElementById('budget-needs-pct').textContent = `${needsPct}% of spending`;
+    document.getElementById('budget-wants-pct').textContent = `${wantsPct}% of spending`;
+    
+    const msgEl = document.getElementById('budget-ratio-message');
+    if (totalBudget > 0) {
+      if (needsPct > 70) {
+        msgEl.textContent = `Needs are high at ${needsPct}% of spending. Consider finding ways to lower fixed costs (utilities, subscriptions) to free up savings.`;
+        msgEl.style.color = 'var(--amber)';
+      } else if (wantsPct > 40) {
+        msgEl.textContent = `Wants make up ${wantsPct}% of spending. Try reviewing unnecessary shopping or entertainment expenses to stay on budget.`;
+        msgEl.style.color = 'var(--red)';
+      } else {
+        msgEl.textContent = `Good balance! Needs: ${needsPct}%, Wants: ${wantsPct}%. This spending structure leaves ample room for financial goals.`;
+        msgEl.style.color = 'var(--green)';
+      }
+    } else {
+      msgEl.textContent = 'Record some expenses to analyze your Needs vs. Wants budget balance.';
+      msgEl.style.color = 'var(--text-3)';
+    }
+  }
+
   function updateNav() {
     document.getElementById('month-label').textContent = `${MONTHS[viewMonth - 1]} ${viewYear}`;
     const idx = availableMonths.findIndex(m => m.month === viewMonth && m.year === viewYear);
@@ -1545,6 +1937,39 @@
       }
 
       renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals, data.cardPayments, data.carryover ?? 0, data.adjustedNet ?? data.net);
+
+      // Fallback in case backend doesn't return categoryTotals/typeTotals immediately
+      if (!data.categoryTotals || !data.typeTotals) {
+        try {
+          const txUrl = `${GAS_URL}?action=transactions&month=${viewMonth}&year=${viewYear}`;
+          const txRes = await fetch(txUrl);
+          const txData = await txRes.json();
+          
+          data.categoryTotals = {};
+          data.typeTotals = { essential: 0, unnecessary: 0, home: data.homeTotal || 0 };
+          
+          (txData.transactions || []).forEach(t => {
+            if (t.source === 'expenses') {
+              const isIncome = (t.expType || '').toLowerCase() === 'income';
+              if (!isIncome) {
+                const cat = t.category || 'Other';
+                data.categoryTotals[cat] = (data.categoryTotals[cat] || 0) + t.amount;
+                
+                const type = (t.expType || '').toLowerCase();
+                if (type === 'unnecessary') {
+                  data.typeTotals.unnecessary += t.amount;
+                } else {
+                  data.typeTotals.essential += t.amount;
+                }
+              }
+            }
+          });
+        } catch (e) {
+          console.error("Failed to load transactions for fallback aggregation", e);
+        }
+      }
+
+      renderCashflow(data);
       updateNav();
       status.textContent = `Last synced ${new Date().toLocaleTimeString()}`;
     } catch (err) {
