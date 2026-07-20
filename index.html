@@ -282,6 +282,14 @@
     .ct-logo-wrap.apple { background: #000; }
     .ct-logo-wrap.wf    { background: #fff; padding: 4px; }
     .ct-logo-wrap.cash  { background: transparent; }
+    .ct-logo-wrap.generic {
+      background: var(--gold-dim);
+      border: 1px solid rgba(201,168,76,0.2);
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+    }
 
     .ct-logo-wrap img {
       width: 100%;
@@ -297,6 +305,46 @@
       letter-spacing: 0.04em;
       text-align: center;
     }
+
+    /* ── Add-card tile & close (archive) button ── */
+    .ct-card-add {
+      background: transparent;
+      border: 1.5px dashed var(--border-2);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 180px;
+      cursor: pointer;
+      color: var(--text-2);
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 18px 12px;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .ct-card-add:hover { background: var(--surface); border-color: var(--gold-ring); color: var(--gold); }
+    .ct-card-add .add-icon-big { font-size: 1.6rem; line-height: 1; }
+
+    .ct-card-close {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      color: var(--text-3);
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+      z-index: 2;
+      padding: 0;
+    }
+    .ct-card:hover .ct-card-close { opacity: 0.7; }
+    .ct-card-close:hover { opacity: 1 !important; color: var(--red); background: rgba(224,85,85,0.12); }
 
     .ct-amount {
       font-size: 1.05rem;
@@ -878,6 +926,26 @@
       color: var(--red);
     }
 
+    .tx-edit-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      width: 26px; height: 26px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      padding: 0;
+      opacity: 0.45;
+      transition: background 0.15s, color 0.15s, opacity 0.15s;
+    }
+    .tx-card:hover .tx-edit-btn { opacity: 0.7; }
+    .tx-edit-btn:hover {
+      opacity: 1 !important;
+      background: var(--gold-dim);
+      color: var(--gold);
+    }
+
     /* ── Confirmation dialog ── */
     .confirm-overlay {
       position: fixed;
@@ -1339,6 +1407,15 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    /* mini variant, used for the Net carryover toggle */
+    .switch-label.mini { width: 26px; height: 15px; }
+    .switch-label.mini .switch-slider::before {
+      height: 9px; width: 9px; left: 2.5px; bottom: 2.5px;
+    }
+    .switch-label.mini input:checked + .switch-slider::before {
+      transform: translateX(11px);
+    }
   </style>
 </head>
 <body>
@@ -1371,12 +1448,18 @@
       <div class="label">Total Income</div>
       <div class="value blue" id="card-income">—</div>
     </div>
-    <div class="card">
+    <div class="card card-clickable" id="expenses-summary-card">
       <div class="label">Total Expenses</div>
       <div class="value red" id="card-expenses">—</div>
     </div>
     <div class="card">
-      <div class="label">Net</div>
+      <div class="label" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Net</span>
+        <label class="switch-label mini" title="Include carryover from previous months">
+          <input type="checkbox" id="toggle-carryover" checked>
+          <span class="switch-slider"></span>
+        </label>
+      </div>
       <div class="value" id="card-net">—</div>
       <div id="card-net-carryover" class="carryover-label"></div>
     </div>
@@ -1435,77 +1518,8 @@
 
   <!-- Spending by card type -->
   <div class="section-label">Spent by Card</div>
-  <div class="card-type-row">
-
-    <div class="ct-card">
-      <div class="ct-logo-wrap apple">
-        <img src="Images/Apple logo.png" alt="Apple">
-      </div>
-      <div class="ct-amount" id="ct-apple">—</div>
-      <div class="payment-wheel" data-card="apple" role="slider" aria-label="Apple paid amount" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" tabindex="0">
-        <svg viewBox="0 0 120 120" aria-hidden="true">
-          <circle class="wheel-track" cx="60" cy="60" r="48"></circle>
-          <circle class="wheel-fill" cx="60" cy="60" r="48"></circle>
-          <circle class="wheel-thumb" cx="60" cy="12" r="7"></circle>
-        </svg>
-        <div class="wheel-center">
-          <div class="wheel-paid-label">Paid</div>
-          <div class="wheel-paid-value" id="wheel-apple-paid">—</div>
-          <div class="wheel-remaining" id="wheel-apple-left">— left</div>
-        </div>
-      </div>
-      <label class="payment-input-wrap" for="pay-apple">
-        <span>$</span>
-        <input class="payment-input" id="pay-apple" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Paid amount">
-      </label>
-    </div>
-
-    <div class="ct-card">
-      <div class="ct-logo-wrap wf">
-        <img src="Images/WF.png" alt="Wells Fargo">
-      </div>
-      <div class="ct-amount" id="ct-wf">—</div>
-      <div class="payment-wheel" data-card="wf" role="slider" aria-label="Wells Fargo paid amount" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" tabindex="0">
-        <svg viewBox="0 0 120 120" aria-hidden="true">
-          <circle class="wheel-track" cx="60" cy="60" r="48"></circle>
-          <circle class="wheel-fill" cx="60" cy="60" r="48"></circle>
-          <circle class="wheel-thumb" cx="60" cy="12" r="7"></circle>
-        </svg>
-        <div class="wheel-center">
-          <div class="wheel-paid-label">Paid</div>
-          <div class="wheel-paid-value" id="wheel-wf-paid">—</div>
-          <div class="wheel-remaining" id="wheel-wf-left">— left</div>
-        </div>
-      </div>
-      <label class="payment-input-wrap" for="pay-wf">
-        <span>$</span>
-        <input class="payment-input" id="pay-wf" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Paid amount">
-      </label>
-    </div>
-
-    <div class="ct-card">
-      <div class="ct-logo-wrap cash">
-        <img src="Images/cash.png" alt="Cash">
-      </div>
-      <div class="ct-amount" id="ct-cash">—</div>
-      <div class="payment-wheel" data-card="cash" role="slider" aria-label="Cash paid amount" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" tabindex="0">
-        <svg viewBox="0 0 120 120" aria-hidden="true">
-          <circle class="wheel-track" cx="60" cy="60" r="48"></circle>
-          <circle class="wheel-fill" cx="60" cy="60" r="48"></circle>
-          <circle class="wheel-thumb" cx="60" cy="12" r="7"></circle>
-        </svg>
-        <div class="wheel-center">
-          <div class="wheel-paid-label">Paid</div>
-          <div class="wheel-paid-value" id="wheel-cash-paid">—</div>
-          <div class="wheel-remaining" id="wheel-cash-left">— left</div>
-        </div>
-      </div>
-      <label class="payment-input-wrap" for="pay-cash">
-        <span>$</span>
-        <input class="payment-input" id="pay-cash" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Paid amount">
-      </label>
-    </div>
-
+  <div class="card-type-row" id="card-type-row">
+    <div class="tx-empty" style="padding: 20px 0;"><span class="spinner"></span> Loading…</div>
   </div>
 
   <!-- Monthly Fixed Expenses -->
@@ -1525,12 +1539,12 @@
     <div class="drag-handle"></div>
 
     <div class="modal-header">
-      <div class="modal-title">New Entry</div>
+      <div class="modal-title" id="entry-modal-title">New Entry</div>
       <button class="modal-close" id="btn-modal-close" aria-label="Close">✕</button>
     </div>
 
     <!-- Table selector -->
-    <div class="table-toggle">
+    <div class="table-toggle" id="entry-table-toggle">
       <button type="button" class="toggle-opt active" data-table="expenses">My Expenses</button>
       <button type="button" class="toggle-opt" data-table="home">Home Expenses</button>
     </div>
@@ -1561,9 +1575,6 @@
           <label for="f-cardtype">Card / Method</label>
           <select id="f-cardtype">
             <option value="">Select…</option>
-            <option value="Apple">Apple</option>
-            <option value="Wells Fargo">Wells Fargo</option>
-            <option value="Cash">Cash</option>
           </select>
         </div>
 
@@ -1712,8 +1723,8 @@
 <!-- Delete confirmation dialog -->
 <div class="confirm-overlay" id="confirm-overlay">
   <div class="confirm-card">
-    <div class="confirm-icon">🗑️</div>
-    <div class="confirm-title">Delete Transaction?</div>
+    <div class="confirm-icon" id="confirm-icon">🗑️</div>
+    <div class="confirm-title" id="confirm-title">Delete Transaction?</div>
     <div class="confirm-detail" id="confirm-detail">This will permanently remove this entry from your spreadsheet.</div>
     <div class="confirm-actions">
       <button class="btn-confirm-cancel" id="confirm-cancel">Cancel</button>
@@ -1756,9 +1767,6 @@
           <label for="rf-cardtype">Card / Method</label>
           <select id="rf-cardtype">
             <option value="">Select…</option>
-            <option value="Apple">Apple</option>
-            <option value="Wells Fargo">Wells Fargo</option>
-            <option value="Cash">Cash</option>
           </select>
         </div>
       </div>
@@ -1766,6 +1774,30 @@
       <div class="form-actions">
         <button type="button" class="btn-cancel" id="rf-cancel">Cancel</button>
         <button type="submit" class="btn-save" id="rf-submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add card modal -->
+<div class="modal-overlay" id="addcard-modal-overlay" role="dialog" aria-modal="true" aria-label="Add Card">
+  <div class="modal-card" id="addcard-modal-card" style="max-width: 380px;">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="modal-title">Add Card / Method</div>
+      <button class="modal-close" id="addcard-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <form id="addcard-form" novalidate>
+      <div class="form-group col-span" style="margin-bottom: 18px;">
+        <label for="ac-name">Name</label>
+        <input id="ac-name" type="text" placeholder="e.g. Chase Sapphire" required>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" id="ac-cancel">Cancel</button>
+        <button type="submit" class="btn-save" id="ac-submit">Add Card</button>
       </div>
     </form>
   </div>
@@ -1786,20 +1818,33 @@
   let availableMonths = [];
   let selectedTable   = 'expenses';
   let selectedExpType = 'Essential';
-  const CARD_IDS = ['apple', 'wf', 'cash'];
-  const CARD_KEYS = {
-    apple: 'Apple',
-    wf:    'Wells Fargo',
-    cash:  'Cash',
+
+  // ── Cards / payment methods (dynamic — user can add or archive) ──
+  let cards            = []; // [{ name, archived }]
+  let activeCardSlugs  = [];
+  let cardMeta         = {}; // slug -> { name, archived }
+  let paymentState     = {}; // slug -> { owed, paid }
+  const KNOWN_CARD_STYLE = {
+    'apple':       { cls: 'apple', img: 'Images/Apple logo.png', alt: 'Apple' },
+    'wells fargo': { cls: 'wf',    img: 'Images/WF.png',          alt: 'Wells Fargo' },
+    'cash':        { cls: 'cash',  img: 'Images/cash.png',        alt: 'Cash' },
   };
+
+  function slugifyCard(name) {
+    return (name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'card';
+  }
+
   const WHEEL_RADIUS = 48;
   const WHEEL_CIRCUMFERENCE = 2 * Math.PI * WHEEL_RADIUS;
-  const paymentState = {
-    apple: { owed: 0, paid: 0 },
-    wf:    { owed: 0, paid: 0 },
-    cash:  { owed: 0, paid: 0 },
-  };
   const paymentSaveTimers = {};
+
+  // ── Editing an existing transaction ──
+  let editingTransaction = null; // { source, rowIndex }
+  let editingModalSource = null; // 'card' | 'income' | 'home'
+
+  // ── Net carryover display toggle ──
+  let includeCarryover = localStorage.getItem('ft_includeCarryover') !== '0';
+  let lastNetData = { net: 0, carryover: 0, adjustedNet: 0 };
 
   const fmt = v => {
     const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[$,]/g, ''));
@@ -1828,7 +1873,7 @@
       action: 'setPayment',
       month: viewMonth,
       year: viewYear,
-      cardType: CARD_KEYS[cardId],
+      cardType: cardMeta[cardId].name,
       amount: state.paid.toFixed(2),
     });
 
@@ -1902,32 +1947,288 @@
     document.getElementById('card-income').textContent   = fmt(income);
     document.getElementById('card-expenses').textContent = fmt(expenses);
     document.getElementById('card-home').textContent     = fmt(homeTotal ?? 0);
-    const display = adjustedNet ?? net;
+
+    lastNetData = { net, carryover, adjustedNet };
+    renderNetCard();
+
+    const ct = cardTotals || {};
+    const payments = cardPayments || {};
+    activeCardSlugs.forEach(slug => {
+      const key = cardMeta[slug].name;
+      const val = ct[key] ?? 0;
+      const el  = document.getElementById('ct-' + slug);
+      if (!el) return;
+      el.textContent = fmt(val);
+      el.className   = 'ct-amount' + (val === 0 ? ' zero' : '');
+      updatePaymentOwed(slug, val, payments[key] ?? 0);
+    });
+  }
+
+  function renderNetCard() {
+    const { net, carryover, adjustedNet } = lastNetData;
+    const display = includeCarryover ? (adjustedNet ?? net) : net;
     const netEl = document.getElementById('card-net');
     netEl.textContent = fmt(display);
     netEl.className   = 'value ' + colorClass(display);
 
     const carryEl = document.getElementById('card-net-carryover');
-    if (carryover && carryover !== 0) {
+    if (includeCarryover && carryover && carryover !== 0) {
       carryEl.textContent = carryover > 0
         ? `+${fmt(carryover)} carried`
         : `${fmt(carryover)} carried`;
       carryEl.className = 'carryover-label ' + (carryover > 0 ? 'green' : 'red');
+    } else if (!includeCarryover && carryover && carryover !== 0) {
+      carryEl.textContent = 'Carryover excluded';
+      carryEl.className   = 'carryover-label';
     } else {
       carryEl.textContent = '';
       carryEl.className   = 'carryover-label';
     }
+  }
 
-    const ct = cardTotals || {};
-    const payments = cardPayments || {};
-    CARD_IDS.forEach(id => {
-      const key = CARD_KEYS[id];
-      const val = ct[key] ?? 0;
-      const el  = document.getElementById('ct-' + id);
-      el.textContent = fmt(val);
-      el.className   = 'ct-amount' + (val === 0 ? ' zero' : '');
-      updatePaymentOwed(id, val, payments[key] ?? 0);
+  document.getElementById('toggle-carryover').addEventListener('change', e => {
+    includeCarryover = e.target.checked;
+    localStorage.setItem('ft_includeCarryover', includeCarryover ? '1' : '0');
+    renderNetCard();
+  });
+
+  // ── Card / payment method management ──
+  function buildCardState() {
+    cardMeta        = {};
+    paymentState     = {};
+    activeCardSlugs  = [];
+    const used = new Set();
+    cards.forEach(c => {
+      let base = slugifyCard(c.name), slug = base, n = 2;
+      while (used.has(slug)) slug = `${base}-${n++}`;
+      used.add(slug);
+      cardMeta[slug]    = { name: c.name, archived: c.archived };
+      paymentState[slug] = { owed: 0, paid: 0 };
+      if (!c.archived) activeCardSlugs.push(slug);
     });
+  }
+
+  async function loadCards() {
+    try {
+      const data = await fetch(`${GAS_URL}?action=getCards`).then(r => r.json());
+      cards = data.cards || [];
+    } catch {
+      cards = [];
+    }
+    buildCardState();
+    renderCtCards();
+    populateCardSelects();
+  }
+
+  function renderCtCards() {
+    const container = document.getElementById('card-type-row');
+    container.innerHTML = '';
+
+    activeCardSlugs.forEach(slug => {
+      const meta  = cardMeta[slug];
+      const known = KNOWN_CARD_STYLE[meta.name.toLowerCase()];
+
+      const card = document.createElement('div');
+      card.className = 'ct-card';
+
+      const closeBtn = document.createElement('button');
+      closeBtn.type      = 'button';
+      closeBtn.className = 'ct-card-close';
+      closeBtn.setAttribute('aria-label', `Close ${meta.name}`);
+      closeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+      closeBtn.addEventListener('click', e => { e.stopPropagation(); openConfirmArchiveCard(meta.name); });
+      card.appendChild(closeBtn);
+
+      const logoWrap = document.createElement('div');
+      if (known) {
+        logoWrap.className = `ct-logo-wrap ${known.cls}`;
+        const img = document.createElement('img');
+        img.src = known.img;
+        img.alt = known.alt;
+        logoWrap.appendChild(img);
+      } else {
+        logoWrap.className   = 'ct-logo-wrap generic';
+        logoWrap.textContent = meta.name.slice(0, 2).toUpperCase();
+      }
+      card.appendChild(logoWrap);
+
+      const amount = document.createElement('div');
+      amount.className   = 'ct-amount';
+      amount.id           = `ct-${slug}`;
+      amount.textContent  = '—';
+      card.appendChild(amount);
+
+      const wheel = document.createElement('div');
+      wheel.className = 'payment-wheel';
+      wheel.dataset.card = slug;
+      wheel.setAttribute('role', 'slider');
+      wheel.setAttribute('aria-label', `${meta.name} paid amount`);
+      wheel.setAttribute('aria-valuemin', '0');
+      wheel.setAttribute('aria-valuemax', '0');
+      wheel.setAttribute('aria-valuenow', '0');
+      wheel.tabIndex = 0;
+      wheel.innerHTML = `
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="wheel-track" cx="60" cy="60" r="48"></circle>
+          <circle class="wheel-fill" cx="60" cy="60" r="48"></circle>
+          <circle class="wheel-thumb" cx="60" cy="12" r="7"></circle>
+        </svg>
+        <div class="wheel-center">
+          <div class="wheel-paid-label">Paid</div>
+          <div class="wheel-paid-value" id="wheel-${slug}-paid">—</div>
+          <div class="wheel-remaining" id="wheel-${slug}-left">— left</div>
+        </div>`;
+      card.appendChild(wheel);
+
+      const inputWrap = document.createElement('label');
+      inputWrap.className = 'payment-input-wrap';
+      inputWrap.setAttribute('for', `pay-${slug}`);
+      const dollarSpan = document.createElement('span');
+      dollarSpan.textContent = '$';
+      inputWrap.appendChild(dollarSpan);
+      const input = document.createElement('input');
+      input.className   = 'payment-input';
+      input.id           = `pay-${slug}`;
+      input.type          = 'number';
+      input.min            = '0';
+      input.step            = '0.01';
+      input.inputMode        = 'decimal';
+      input.placeholder       = 'Paid amount';
+      inputWrap.appendChild(input);
+      card.appendChild(inputWrap);
+
+      container.appendChild(card);
+
+      card.addEventListener('click', () => openCardModal(slug));
+      wireCtCardWheel(slug, wheel);
+      inputWrap.addEventListener('click', e => e.stopPropagation());
+      input.addEventListener('click', e => e.stopPropagation());
+      input.addEventListener('input', e => setPayment(slug, e.target.value));
+      input.addEventListener('blur', () => renderPaymentWheel(slug));
+
+      renderPaymentWheel(slug);
+    });
+
+    const addTile = document.createElement('button');
+    addTile.type      = 'button';
+    addTile.className = 'ct-card-add';
+    addTile.innerHTML = `<span class="add-icon-big">+</span><span>Add Card</span>`;
+    addTile.addEventListener('click', openAddCardModal);
+    container.appendChild(addTile);
+  }
+
+  function wireCtCardWheel(cardId, wheel) {
+    wheel.addEventListener('click', e => e.stopPropagation());
+    wheel.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      wheel.setPointerCapture(e.pointerId);
+      setPaymentFromPointer(cardId, e);
+    });
+    wheel.addEventListener('pointermove', e => {
+      if (!wheel.hasPointerCapture(e.pointerId)) return;
+      e.preventDefault();
+      setPaymentFromPointer(cardId, e);
+    });
+    wheel.addEventListener('keydown', e => {
+      const state = paymentState[cardId];
+      const step = Math.max(1, Math.round(state.owed / 100));
+      if (['ArrowRight', 'ArrowUp'].includes(e.key)) {
+        e.preventDefault();
+        setPayment(cardId, state.paid + step);
+      } else if (['ArrowLeft', 'ArrowDown'].includes(e.key)) {
+        e.preventDefault();
+        setPayment(cardId, state.paid - step);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        setPayment(cardId, 0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        setPayment(cardId, state.owed);
+      }
+    });
+  }
+
+  function populateCardSelects() {
+    const activeNames = activeCardSlugs.map(slug => cardMeta[slug].name);
+    [document.getElementById('f-cardtype'), document.getElementById('rf-cardtype')].forEach(sel => {
+      const current = sel.value;
+      sel.innerHTML = '<option value="">Select…</option>';
+      activeNames.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+      if (current && activeNames.includes(current)) sel.value = current;
+    });
+  }
+
+  function ensureCardOption(selectEl, name) {
+    if (!name) return;
+    const exists = Array.from(selectEl.options).some(o => o.value === name);
+    if (!exists) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      selectEl.appendChild(opt);
+    }
+  }
+
+  function openAddCardModal() {
+    document.getElementById('addcard-form').reset();
+    document.getElementById('addcard-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('ac-name').focus(), 80);
+  }
+
+  function closeAddCardModal() {
+    document.getElementById('addcard-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('addcard-modal-close').addEventListener('click', closeAddCardModal);
+  document.getElementById('ac-cancel').addEventListener('click', closeAddCardModal);
+  document.getElementById('addcard-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('addcard-modal-overlay')) closeAddCardModal();
+  });
+
+  document.getElementById('addcard-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('ac-submit');
+    const name = document.getElementById('ac-name').value.trim();
+    if (!name) return;
+    btn.disabled    = true;
+    btn.textContent = 'Adding…';
+    try {
+      const params = new URLSearchParams({ action: 'addCard', name });
+      const data   = await fetch(`${GAS_URL}?${params}`).then(r => r.json());
+      if (data.success) {
+        showToast('Card added');
+        closeAddCardModal();
+        await loadCards();
+        loadData();
+      } else {
+        showToast(data.error || 'Something went wrong', true);
+      }
+    } catch (err) {
+      showToast(`Error: ${err.message}`, true);
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Add Card';
+    }
+  });
+
+  function openConfirmArchiveCard(name) {
+    pendingDeleteTxn       = null;
+    pendingModalSource     = null;
+    pendingDeleteRecurring = null;
+    pendingArchiveCardName = name;
+    document.getElementById('confirm-icon').textContent  = '💳';
+    document.getElementById('confirm-title').textContent = 'Remove Card?';
+    document.getElementById('confirm-detail').innerHTML =
+      `<strong>${name}</strong> will be removed from Spent by Card and new entries. Past transactions on it are kept.`;
+    document.getElementById('confirm-overlay').classList.add('visible');
   }
 
   // ── Cashflow Chart & Budget Rendering ──
@@ -1950,13 +2251,10 @@
 
   function renderCashflow(data) {
     // 1. Prepare Category Totals
+    // Home transactions are excluded from cashflow/budgeting — they're
+    // reimbursable pass-through spending, not personal expenses.
     const categoryTotals = { ...(data.categoryTotals || {}) };
-    
-    // Explicitly add Home Expenses if we have home totals
-    if (data.homeTotal > 0) {
-      categoryTotals['Home Expenses'] = data.homeTotal;
-    }
-    
+
     // Sort categories descending by amount
     const sortedCats = Object.entries(categoryTotals)
       .filter(([, amt]) => amt > 0)
@@ -2039,7 +2337,7 @@
 
     // 2. Render Inflow vs. Outflow progress bar
     const inflow = data.income || 0;
-    const outflow = (data.expenses || 0) + (data.homeTotal || 0);
+    const outflow = data.expenses || 0;
     
     document.getElementById('budget-outflow-val').textContent = `${fmt(outflow)} spent`;
     document.getElementById('budget-inflow-val').textContent = inflow > 0 ? `of ${fmt(inflow)}` : 'no income';
@@ -2077,8 +2375,8 @@
     }
 
     // 3. Render Needs vs. Wants distribution
-    const typeTotals = data.typeTotals || { essential: 0, unnecessary: 0, home: data.homeTotal || 0 };
-    const needs = (typeTotals.essential || 0) + (typeTotals.home || 0);
+    const typeTotals = data.typeTotals || { essential: 0, unnecessary: 0 };
+    const needs = typeTotals.essential || 0;
     const wants = typeTotals.unnecessary || 0;
     const totalBudget = needs + wants;
     
@@ -2209,13 +2507,11 @@
     e.preventDefault();
     const btn = document.getElementById('btn-submit');
     btn.disabled    = true;
-    btn.textContent = 'Saving…';
+    btn.textContent = editingTransaction ? 'Updating…' : 'Saving…';
 
     const entryDateValue = document.getElementById('f-date').value;
 
     const base = {
-      action:   'append',
-      table:    selectedTable,
       name:     document.getElementById('f-name').value.trim(),
       date:     entryDateValue,
       amount:   document.getElementById('f-amount').value,
@@ -2227,18 +2523,26 @@
       : { category: document.getElementById('f-category').value,
           expType:  selectedExpType };
 
-    const params = new URLSearchParams({ ...base, ...extra });
+    const params = editingTransaction
+      ? new URLSearchParams({ action: 'update', source: editingTransaction.source, rowIndex: editingTransaction.rowIndex, ...base, ...extra })
+      : new URLSearchParams({ action: 'append', table: selectedTable, ...base, ...extra });
 
     try {
       const res  = await fetch(`${GAS_URL}?${params}`);
       const data = await res.json();
       if (data.success) {
-        showToast('Entry saved');
+        showToast(editingTransaction ? 'Entry updated' : 'Entry saved');
+        const wasEditing = editingTransaction;
+        const modalSource = editingModalSource;
         const entryDate = new Date(entryDateValue + 'T00:00:00');
         viewMonth = entryDate.getMonth() + 1;
         viewYear  = entryDate.getFullYear();
         closeForm();
         loadData();
+        loadRecurring();
+        if (wasEditing && modalSource === 'card')        fetchCardTransactions();
+        else if (wasEditing && modalSource === 'income') fetchIncomeTxns();
+        else if (wasEditing && modalSource === 'home')   fetchHomeTxns();
       } else {
         showToast(data.error || 'Something went wrong', true);
       }
@@ -2246,7 +2550,7 @@
       showToast(`Error: ${err.message}`, true);
     } finally {
       btn.disabled    = false;
-      btn.textContent = 'Save Entry';
+      btn.textContent = editingTransaction ? 'Update Entry' : 'Save Entry';
     }
   });
 
@@ -2258,6 +2562,12 @@
     document.body.style.overflow = 'hidden';
     setTimeout(() => document.getElementById('f-amount').focus(), 80);
   }
+
+  const MODAL_SOURCE_OVERLAY_ID = {
+    card:   'card-modal-overlay',
+    income: 'income-modal-overlay',
+    home:   'home-modal-overlay',
+  };
 
   function closeForm() {
     document.getElementById('modal-overlay').classList.remove('visible');
@@ -2273,6 +2583,56 @@
     document.querySelectorAll('.toggle-opt').forEach(b => b.classList.remove('active'));
     document.querySelector('[data-table="expenses"]').classList.add('active');
     document.getElementById('entry-form').className = 'mode-expenses';
+
+    // Editing opened on top of a card/income/home modal — bring it back into view.
+    const overlayId = MODAL_SOURCE_OVERLAY_ID[editingModalSource];
+    if (overlayId) {
+      document.getElementById(overlayId).classList.add('visible');
+      document.body.style.overflow = 'hidden';
+    }
+
+    editingTransaction = null;
+    editingModalSource = null;
+    document.getElementById('entry-modal-title').textContent = 'New Entry';
+    document.getElementById('btn-submit').textContent = 'Save Entry';
+    document.getElementById('entry-table-toggle').style.display = '';
+  }
+
+  function openEditTransaction(t, modalSource) {
+    editingTransaction = { source: t.source, rowIndex: t.rowIndex };
+    editingModalSource = modalSource;
+    selectedTable = t.source === 'home' ? 'home' : 'expenses';
+
+    // Hide the underlying list modal so it doesn't intercept clicks behind the entry form.
+    const overlayId = MODAL_SOURCE_OVERLAY_ID[modalSource];
+    if (overlayId) document.getElementById(overlayId).classList.remove('visible');
+
+    document.querySelectorAll('.toggle-opt').forEach(b => b.classList.toggle('active', b.dataset.table === selectedTable));
+    document.getElementById('entry-form').className = selectedTable === 'home' ? 'mode-home' : 'mode-expenses';
+    document.getElementById('entry-table-toggle').style.display = 'none';
+
+    document.getElementById('f-amount').value = t.amount;
+    document.getElementById('f-name').value   = t.name;
+    document.getElementById('f-date').value   = t.date;
+
+    const cardSel = document.getElementById('f-cardtype');
+    ensureCardOption(cardSel, t.cardType);
+    cardSel.value = t.cardType || '';
+
+    if (selectedTable === 'home') {
+      document.getElementById('f-description').value = t.description || '';
+    } else {
+      document.getElementById('f-category').value = t.category || '';
+      selectedExpType = t.expType || 'Essential';
+      document.querySelectorAll('.exp-pill').forEach(p => p.classList.toggle('active', p.dataset.value === selectedExpType));
+    }
+
+    document.getElementById('entry-modal-title').textContent = 'Edit Entry';
+    document.getElementById('btn-submit').textContent = 'Update Entry';
+
+    document.getElementById('modal-overlay').classList.add('visible');
+    document.getElementById('btn-toggle-form').classList.add('open');
+    document.body.style.overflow = 'hidden';
   }
 
   document.getElementById('btn-toggle-form').addEventListener('click', () => {
@@ -2316,12 +2676,6 @@
   });
 
   // ── Card transactions ──
-  const CARD_META = {
-    apple: { key: 'Apple',       label: 'Apple Card',  logo: 'Images/Apple logo.png', cls: 'apple' },
-    wf:    { key: 'Wells Fargo', label: 'Wells Fargo', logo: 'Images/WF.png',          cls: 'wf'    },
-    cash:  { key: 'Cash',        label: 'Cash',        logo: 'Images/cash.png',        cls: 'cash'  },
-  };
-
   const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   function fmtDateShort(iso) {
@@ -2333,15 +2687,39 @@
   let activeCardMeta  = null;
   let allTransactions = [];
 
+  // cardId is a slug from cardMeta, or null/undefined for "all cards combined"
+  function getCardModalMeta(cardId) {
+    if (!cardId) {
+      return { key: null, label: 'Total Expenses', generic: true, initials: '$' };
+    }
+    const meta  = cardMeta[cardId];
+    const known = meta ? KNOWN_CARD_STYLE[meta.name.toLowerCase()] : null;
+    if (!meta) return { key: null, label: 'Total Expenses', generic: true, initials: '$' };
+    if (known) return { key: meta.name, label: meta.name, cls: known.cls, logo: known.img };
+    return { key: meta.name, label: meta.name, generic: true, initials: meta.name.slice(0, 2).toUpperCase() };
+  }
+
   function openCardModal(cardId) {
-    activeCardMeta  = CARD_META[cardId];
+    activeCardMeta  = getCardModalMeta(cardId);
     allTransactions = [];
 
     const logoWrap = document.getElementById('card-modal-logo-wrap');
-    logoWrap.className = `card-modal-logo ${activeCardMeta.cls}`;
-    const logoImg  = document.getElementById('card-modal-logo-img');
-    logoImg.src    = activeCardMeta.logo;
-    logoImg.alt    = activeCardMeta.label;
+    if (activeCardMeta.generic) {
+      logoWrap.className = 'card-modal-logo';
+      logoWrap.style.background = 'var(--gold-dim)';
+      logoWrap.style.color      = 'var(--gold)';
+      logoWrap.style.fontSize   = '1.05rem';
+      logoWrap.style.fontWeight = '800';
+      logoWrap.innerHTML = '';
+      logoWrap.textContent = activeCardMeta.initials;
+    } else {
+      logoWrap.removeAttribute('style');
+      logoWrap.className = `card-modal-logo ${activeCardMeta.cls}`;
+      logoWrap.innerHTML = '<img id="card-modal-logo-img" src="" alt="">';
+      const logoImg = document.getElementById('card-modal-logo-img');
+      logoImg.src = activeCardMeta.logo;
+      logoImg.alt = activeCardMeta.label;
+    }
 
     document.getElementById('card-modal-name').textContent  = activeCardMeta.label;
     document.getElementById('card-modal-total').textContent = '';
@@ -2351,6 +2729,10 @@
     document.getElementById('card-modal-overlay').classList.add('visible');
     document.body.style.overflow = 'hidden';
     fetchCardTransactions();
+  }
+
+  function openAllExpensesModal() {
+    openCardModal(null);
   }
 
   function closeCardModal() {
@@ -2363,9 +2745,15 @@
   async function fetchCardTransactions() {
     if (!activeCardMeta) return;
     try {
-      const url  = `${GAS_URL}?action=transactions&source=expenses&cardType=${encodeURIComponent(activeCardMeta.key)}&month=${viewMonth}&year=${viewYear}`;
+      const cardParam = activeCardMeta.key ? `&cardType=${encodeURIComponent(activeCardMeta.key)}` : '';
+      const url  = `${GAS_URL}?action=transactions&source=expenses${cardParam}&month=${viewMonth}&year=${viewYear}`;
       const data = await fetch(url).then(r => r.json());
-      allTransactions = (data.transactions || []).filter(t => t.source === 'expenses');
+      let txns = (data.transactions || []).filter(t => t.source === 'expenses');
+      if (!activeCardMeta.key) {
+        // "Total Expenses" (all cards combined) — exclude income to match the summary figure
+        txns = txns.filter(t => (t.expType || '').toLowerCase() !== 'income');
+      }
+      allTransactions = txns;
 
       const total = allTransactions
         .filter(t => (t.expType || '').toLowerCase() !== 'income')
@@ -2472,6 +2860,13 @@
 
         card.appendChild(right);
 
+        const editBtn = document.createElement('button');
+        editBtn.className = 'tx-edit-btn';
+        editBtn.setAttribute('aria-label', 'Edit transaction');
+        editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+        editBtn.addEventListener('click', e => { e.stopPropagation(); openEditTransaction(t, modalSource); });
+        card.appendChild(editBtn);
+
         const delBtn = document.createElement('button');
         delBtn.className = 'tx-delete-btn';
         delBtn.setAttribute('aria-label', 'Delete transaction');
@@ -2556,6 +2951,7 @@
   }
 
   document.getElementById('income-summary-card').addEventListener('click', openIncomeModal);
+  document.getElementById('expenses-summary-card').addEventListener('click', openAllExpensesModal);
   document.getElementById('income-modal-close').addEventListener('click', closeIncomeModal);
   document.getElementById('income-modal-overlay').addEventListener('click', e => {
     if (e.target === document.getElementById('income-modal-overlay')) closeIncomeModal();
@@ -2656,6 +3052,13 @@
 
         card.appendChild(right);
 
+        const editBtn = document.createElement('button');
+        editBtn.className = 'tx-edit-btn';
+        editBtn.setAttribute('aria-label', 'Edit transaction');
+        editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+        editBtn.addEventListener('click', e => { e.stopPropagation(); openEditTransaction(t, 'home'); });
+        card.appendChild(editBtn);
+
         const delBtn = document.createElement('button');
         delBtn.className = 'tx-delete-btn';
         delBtn.setAttribute('aria-label', 'Delete transaction');
@@ -2725,11 +3128,15 @@
   let pendingDeleteTxn       = null;
   let pendingModalSource     = null;
   let pendingDeleteRecurring = null;
+  let pendingArchiveCardName = null;
 
   function openConfirm(txn, modalSource) {
     pendingDeleteRecurring = null;
+    pendingArchiveCardName = null;
     pendingDeleteTxn   = txn;
     pendingModalSource = modalSource;
+    document.getElementById('confirm-icon').textContent  = '🗑️';
+    document.getElementById('confirm-title').textContent = 'Delete Transaction?';
     document.getElementById('confirm-detail').innerHTML =
       `<strong>${txn.name}</strong> (${fmt(txn.amount)}) will be permanently removed from your spreadsheet.`;
     document.getElementById('confirm-overlay').classList.add('visible');
@@ -2738,7 +3145,10 @@
   function openConfirmRecurring(item) {
     pendingDeleteTxn   = null;
     pendingModalSource = null;
+    pendingArchiveCardName = null;
     pendingDeleteRecurring = item;
+    document.getElementById('confirm-icon').textContent  = '🗑️';
+    document.getElementById('confirm-title').textContent = 'Delete Fixed Expense?';
     document.getElementById('confirm-detail').innerHTML =
       `<strong>${item.name}</strong> (${fmt(item.amount)}) will be removed from your fixed expenses and won't carry into future months.`;
     document.getElementById('confirm-overlay').classList.add('visible');
@@ -2752,9 +3162,34 @@
     pendingDeleteTxn       = null;
     pendingModalSource     = null;
     pendingDeleteRecurring = null;
+    pendingArchiveCardName = null;
   }
 
   async function executeDelete() {
+    if (pendingArchiveCardName) {
+      const btn = document.getElementById('confirm-delete-btn');
+      btn.disabled    = true;
+      btn.textContent = 'Removing…';
+      const name = pendingArchiveCardName;
+
+      try {
+        const params = new URLSearchParams({ action: 'archiveCard', name });
+        const data   = await fetch(`${GAS_URL}?${params}`).then(r => r.json());
+        if (data.success) {
+          closeConfirm();
+          await loadCards();
+          loadData();
+        } else {
+          showToast(data.error || 'Could not remove card', true);
+          closeConfirm();
+        }
+      } catch {
+        showToast('Error removing card', true);
+        closeConfirm();
+      }
+      return;
+    }
+
     if (pendingDeleteRecurring) {
       const btn = document.getElementById('confirm-delete-btn');
       btn.disabled    = true;
@@ -2810,56 +3245,6 @@
   document.getElementById('confirm-delete-btn').addEventListener('click', executeDelete);
   document.getElementById('confirm-overlay').addEventListener('click', e => {
     if (e.target === document.getElementById('confirm-overlay')) closeConfirm();
-  });
-
-  // Wire up ct-cards
-  document.querySelectorAll('.ct-card').forEach((card, i) => {
-    card.addEventListener('click', () => openCardModal(CARD_IDS[i]));
-  });
-
-  document.querySelectorAll('.payment-wheel').forEach(wheel => {
-    const cardId = wheel.dataset.card;
-
-    wheel.addEventListener('click', e => e.stopPropagation());
-    wheel.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      wheel.setPointerCapture(e.pointerId);
-      setPaymentFromPointer(cardId, e);
-    });
-    wheel.addEventListener('pointermove', e => {
-      if (!wheel.hasPointerCapture(e.pointerId)) return;
-      e.preventDefault();
-      setPaymentFromPointer(cardId, e);
-    });
-    wheel.addEventListener('keydown', e => {
-      const state = paymentState[cardId];
-      const step = Math.max(1, Math.round(state.owed / 100));
-      if (['ArrowRight', 'ArrowUp'].includes(e.key)) {
-        e.preventDefault();
-        setPayment(cardId, state.paid + step);
-      } else if (['ArrowLeft', 'ArrowDown'].includes(e.key)) {
-        e.preventDefault();
-        setPayment(cardId, state.paid - step);
-      } else if (e.key === 'Home') {
-        e.preventDefault();
-        setPayment(cardId, 0);
-      } else if (e.key === 'End') {
-        e.preventDefault();
-        setPayment(cardId, state.owed);
-      }
-    });
-  });
-
-  document.querySelectorAll('.payment-input-wrap').forEach(wrap => {
-    wrap.addEventListener('click', e => e.stopPropagation());
-  });
-
-  document.querySelectorAll('.payment-input').forEach(input => {
-    const cardId = input.id.replace('pay-', '');
-    input.addEventListener('click', e => e.stopPropagation());
-    input.addEventListener('input', e => setPayment(cardId, e.target.value));
-    input.addEventListener('blur', () => renderPaymentWheel(cardId));
   });
 
   document.getElementById('card-modal-close').addEventListener('click', closeCardModal);
@@ -3025,8 +3410,11 @@
     }
   });
 
-  loadData();
-  loadRecurring();
+  (async () => {
+    await loadCards();
+    loadData();
+    loadRecurring();
+  })();
 </script>
 </body>
 </html>
