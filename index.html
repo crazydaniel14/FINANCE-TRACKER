@@ -1189,6 +1189,156 @@
       color: var(--text-3);
       font-weight: 600;
     }
+
+    /* ── Monthly Fixed Expenses Styles ── */
+    .recurring-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .recurring-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .recurring-item:hover {
+      background: var(--surface-2);
+    }
+    .recurring-item.charged {
+      border-color: rgba(62, 207, 142, 0.2);
+      box-shadow: 0 0 12px rgba(62, 207, 142, 0.03);
+    }
+    .recurring-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .recurring-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .recurring-meta {
+      font-size: 0.68rem;
+      color: var(--text-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .recurring-amount {
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-2);
+      transition: color 0.15s;
+    }
+    .recurring-item.charged .recurring-amount {
+      color: var(--green);
+    }
+    .recurring-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-rec-action {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      width: 26px; height: 26px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0.55;
+      transition: background 0.15s, color 0.15s, opacity 0.15s;
+      padding: 0;
+    }
+    .btn-rec-action:hover {
+      opacity: 0.9;
+      color: var(--text);
+      background: var(--surface-2);
+    }
+    .btn-rec-action.delete:hover {
+      color: var(--red);
+      background: rgba(224, 85, 85, 0.1);
+      opacity: 1;
+    }
+    .btn-add-rec {
+      width: 100%;
+      background: transparent;
+      border: 1.5px dashed var(--border-2);
+      border-radius: 12px;
+      color: var(--text-2);
+      padding: 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      margin-top: 4px;
+    }
+    .btn-add-rec:hover {
+      background: var(--surface);
+      border-color: var(--gold-ring);
+      color: var(--gold);
+    }
+
+    /* Custom premium toggle switch */
+    .switch-label {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .switch-label input {
+      opacity: 0; width: 0; height: 0;
+    }
+    .switch-slider {
+      position: absolute;
+      inset: 0;
+      background-color: var(--border-2);
+      border-radius: 34px;
+      transition: background-color 0.2s, border-color 0.2s;
+      border: 1.5px solid var(--border);
+    }
+    .switch-slider::before {
+      content: "";
+      position: absolute;
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 2.5px;
+      background-color: var(--text-2);
+      border-radius: 50%;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    .switch-label input:checked + .switch-slider {
+      background-color: rgba(62, 207, 142, 0.15);
+      border-color: var(--green);
+    }
+    .switch-label input:checked + .switch-slider::before {
+      transform: translateX(18px);
+      background-color: var(--green);
+    }
+    .switch-label input:disabled + .switch-slider {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -1358,6 +1508,15 @@
 
   </div>
 
+  <!-- Monthly Fixed Expenses -->
+  <div class="section-label">Monthly Fixed Expenses</div>
+  <div class="recurring-list" id="recurring-list">
+    <div class="tx-empty" style="padding: 20px 0;"><span class="spinner"></span> Loading…</div>
+  </div>
+  <button type="button" class="btn-add-rec" id="btn-add-rec">
+    <span style="font-size: 1.05rem; line-height: 1;">+</span> Add Fixed Expense
+  </button>
+
 </div><!-- /container -->
 
 <!-- Modal overlay -->
@@ -1411,16 +1570,14 @@
         <!-- My Expenses only -->
         <div class="form-group expenses-only">
           <label for="f-category">Category</label>
-          <select id="f-category">
-            <option value="">Select…</option>
-            <option value="Food">Food</option>
-            <option value="Transport">Transport</option>
-            <option value="Shopping">Shopping</option>
-            <option value="Bills">Bills</option>
-            <option value="Health">Health</option>
-            <option value="Entertainment">Entertainment</option>
-            <option value="Other">Other</option>
-          </select>
+          <input type="text" id="f-category" list="categories-list" placeholder="Select or type category…" required>
+          <datalist id="categories-list">
+            <option value="Food"></option>
+            <option value="Transport"></option>
+            <option value="Entertainment"></option>
+            <option value="Direct Deposit"></option>
+            <option value="Shopping"></option>
+          </datalist>
         </div>
 
         <!-- Home Expenses only -->
@@ -1562,6 +1719,55 @@
       <button class="btn-confirm-cancel" id="confirm-cancel">Cancel</button>
       <button class="btn-confirm-delete" id="confirm-delete-btn">Delete</button>
     </div>
+  </div>
+</div>
+
+<!-- Fixed expense add/edit modal -->
+<div class="modal-overlay" id="recurring-modal-overlay" role="dialog" aria-modal="true" aria-label="Fixed Expense">
+  <div class="modal-card" id="recurring-modal-card">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="modal-title" id="recurring-modal-title">Add Fixed Expense</div>
+      <button class="modal-close" id="recurring-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <form id="recurring-form" novalidate>
+      <div class="amount-section">
+        <label class="field-label" for="rf-amount">Amount</label>
+        <div class="amount-wrap">
+          <span class="amount-sign">$</span>
+          <input id="rf-amount" type="number" min="0" step="0.01" placeholder="0.00" required>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group col-span">
+          <label for="rf-name">Name</label>
+          <input id="rf-name" type="text" placeholder="e.g. Train Monthly Pass" required>
+        </div>
+
+        <div class="form-group">
+          <label for="rf-category">Category</label>
+          <input type="text" id="rf-category" list="categories-list" placeholder="Select or type category…">
+        </div>
+
+        <div class="form-group">
+          <label for="rf-cardtype">Card / Method</label>
+          <select id="rf-cardtype">
+            <option value="">Select…</option>
+            <option value="Apple">Apple</option>
+            <option value="Wells Fargo">Wells Fargo</option>
+            <option value="Cash">Cash</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" id="rf-cancel">Cancel</button>
+        <button type="submit" class="btn-save" id="rf-submit">Save</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -2087,6 +2293,7 @@
     if (document.getElementById('income-modal-overlay').classList.contains('visible')) closeIncomeModal();
     else if (document.getElementById('home-modal-overlay').classList.contains('visible')) closeHomeModal();
     else if (document.getElementById('card-modal-overlay').classList.contains('visible')) closeCardModal();
+    else if (document.getElementById('recurring-modal-overlay').classList.contains('visible')) closeRecurringModal();
     else if (document.getElementById('modal-overlay').classList.contains('visible')) closeForm();
   });
 
@@ -2095,6 +2302,7 @@
     if (idx > 0) {
       ({ month: viewMonth, year: viewYear } = availableMonths[idx - 1]);
       loadData();
+      loadRecurring();
     }
   });
 
@@ -2103,6 +2311,7 @@
     if (idx !== -1 && idx < availableMonths.length - 1) {
       ({ month: viewMonth, year: viewYear } = availableMonths[idx + 1]);
       loadData();
+      loadRecurring();
     }
   });
 
@@ -2513,14 +2722,25 @@
   });
 
   // ── Delete confirmation ──
-  let pendingDeleteTxn   = null;
-  let pendingModalSource = null;
+  let pendingDeleteTxn       = null;
+  let pendingModalSource     = null;
+  let pendingDeleteRecurring = null;
 
   function openConfirm(txn, modalSource) {
+    pendingDeleteRecurring = null;
     pendingDeleteTxn   = txn;
     pendingModalSource = modalSource;
     document.getElementById('confirm-detail').innerHTML =
       `<strong>${txn.name}</strong> (${fmt(txn.amount)}) will be permanently removed from your spreadsheet.`;
+    document.getElementById('confirm-overlay').classList.add('visible');
+  }
+
+  function openConfirmRecurring(item) {
+    pendingDeleteTxn   = null;
+    pendingModalSource = null;
+    pendingDeleteRecurring = item;
+    document.getElementById('confirm-detail').innerHTML =
+      `<strong>${item.name}</strong> (${fmt(item.amount)}) will be removed from your fixed expenses and won't carry into future months.`;
     document.getElementById('confirm-overlay').classList.add('visible');
   }
 
@@ -2529,11 +2749,35 @@
     const btn = document.getElementById('confirm-delete-btn');
     btn.disabled    = false;
     btn.textContent = 'Delete';
-    pendingDeleteTxn   = null;
-    pendingModalSource = null;
+    pendingDeleteTxn       = null;
+    pendingModalSource     = null;
+    pendingDeleteRecurring = null;
   }
 
   async function executeDelete() {
+    if (pendingDeleteRecurring) {
+      const btn = document.getElementById('confirm-delete-btn');
+      btn.disabled    = true;
+      btn.textContent = 'Deleting…';
+      const id = pendingDeleteRecurring.id;
+
+      try {
+        const url  = `${GAS_URL}?action=deleteRecurring&id=${encodeURIComponent(id)}`;
+        const data = await fetch(url).then(r => r.json());
+        if (data.success) {
+          closeConfirm();
+          loadRecurring();
+        } else {
+          showToast(data.error || 'Delete failed', true);
+          closeConfirm();
+        }
+      } catch {
+        showToast('Error deleting fixed expense', true);
+        closeConfirm();
+      }
+      return;
+    }
+
     if (!pendingDeleteTxn) return;
     const btn = document.getElementById('confirm-delete-btn');
     btn.disabled    = true;
@@ -2624,7 +2868,165 @@
   });
   document.getElementById('tx-search').addEventListener('input', e => filterTransactions(e.target.value));
 
+  // ── Monthly Fixed Expenses ──
+  let recurringItems     = [];
+  let editingRecurringId = null;
+
+  async function loadRecurring() {
+    const container = document.getElementById('recurring-list');
+    try {
+      const url  = `${GAS_URL}?action=getRecurring&month=${viewMonth}&year=${viewYear}`;
+      const data = await fetch(url).then(r => r.json());
+      recurringItems = data.recurring || [];
+      renderRecurring();
+    } catch {
+      container.innerHTML = '<div class="tx-empty">Error loading fixed expenses</div>';
+    }
+  }
+
+  function renderRecurring() {
+    const container = document.getElementById('recurring-list');
+    if (!recurringItems.length) {
+      container.innerHTML = '<div class="tx-empty" style="padding: 20px 0;">No fixed expenses yet. Add one below.</div>';
+      return;
+    }
+
+    container.innerHTML = '';
+    recurringItems.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'recurring-item' + (item.charged ? ' charged' : '');
+
+      const info = document.createElement('div');
+      info.className = 'recurring-info';
+      const name = document.createElement('div');
+      name.className   = 'recurring-name';
+      name.textContent = item.name;
+      const meta = document.createElement('div');
+      meta.className   = 'recurring-meta';
+      meta.textContent = [item.category, item.cardType].filter(Boolean).join(' · ') || 'Fixed expense';
+      info.appendChild(name);
+      info.appendChild(meta);
+
+      const amount = document.createElement('div');
+      amount.className   = 'recurring-amount';
+      amount.textContent = fmt(item.amount);
+
+      const actions = document.createElement('div');
+      actions.className = 'recurring-actions';
+
+      const switchLabel = document.createElement('label');
+      switchLabel.className = 'switch-label';
+      switchLabel.title     = 'Mark as charged this month';
+      const checkbox = document.createElement('input');
+      checkbox.type    = 'checkbox';
+      checkbox.checked = item.charged;
+      checkbox.addEventListener('change', () => toggleRecurringCharge(item.id, checkbox.checked));
+      const slider = document.createElement('span');
+      slider.className = 'switch-slider';
+      switchLabel.appendChild(checkbox);
+      switchLabel.appendChild(slider);
+
+      const editBtn = document.createElement('button');
+      editBtn.type      = 'button';
+      editBtn.className = 'btn-rec-action';
+      editBtn.setAttribute('aria-label', 'Edit fixed expense');
+      editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+      editBtn.addEventListener('click', () => openRecurringModal(item));
+
+      const delBtn = document.createElement('button');
+      delBtn.type      = 'button';
+      delBtn.className = 'btn-rec-action delete';
+      delBtn.setAttribute('aria-label', 'Delete fixed expense');
+      delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+      delBtn.addEventListener('click', () => openConfirmRecurring(item));
+
+      actions.appendChild(switchLabel);
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+
+      el.appendChild(info);
+      el.appendChild(amount);
+      el.appendChild(actions);
+      container.appendChild(el);
+    });
+  }
+
+  async function toggleRecurringCharge(id, charged) {
+    const item = recurringItems.find(r => r.id === id);
+    if (item) item.charged = charged;
+    renderRecurring();
+    try {
+      const params = new URLSearchParams({ action: 'toggleRecurring', id, month: viewMonth, year: viewYear, charged });
+      const data   = await fetch(`${GAS_URL}?${params}`).then(r => r.json());
+      if (!data.success) throw new Error(data.error || 'Toggle failed');
+      loadData();
+    } catch (err) {
+      showToast(`Fixed expense not updated: ${err.message}`, true);
+      if (item) item.charged = !charged;
+      renderRecurring();
+    }
+  }
+
+  function openRecurringModal(item) {
+    editingRecurringId = item ? item.id : null;
+    document.getElementById('recurring-modal-title').textContent = item ? 'Edit Fixed Expense' : 'Add Fixed Expense';
+    document.getElementById('rf-name').value     = item ? item.name     : '';
+    document.getElementById('rf-amount').value   = item ? item.amount   : '';
+    document.getElementById('rf-category').value = item ? item.category : '';
+    document.getElementById('rf-cardtype').value = item ? item.cardType : '';
+    document.getElementById('recurring-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('rf-name').focus(), 80);
+  }
+
+  function closeRecurringModal() {
+    document.getElementById('recurring-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+    document.getElementById('recurring-form').reset();
+    editingRecurringId = null;
+  }
+
+  document.getElementById('btn-add-rec').addEventListener('click', () => openRecurringModal(null));
+  document.getElementById('recurring-modal-close').addEventListener('click', closeRecurringModal);
+  document.getElementById('rf-cancel').addEventListener('click', closeRecurringModal);
+  document.getElementById('recurring-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('recurring-modal-overlay')) closeRecurringModal();
+  });
+
+  document.getElementById('recurring-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('rf-submit');
+    btn.disabled    = true;
+    btn.textContent = 'Saving…';
+
+    const params = new URLSearchParams({
+      action:   editingRecurringId ? 'updateRecurring' : 'addRecurring',
+      id:       editingRecurringId || '',
+      name:     document.getElementById('rf-name').value.trim(),
+      amount:   document.getElementById('rf-amount').value,
+      category: document.getElementById('rf-category').value.trim(),
+      cardType: document.getElementById('rf-cardtype').value,
+    });
+
+    try {
+      const data = await fetch(`${GAS_URL}?${params}`).then(r => r.json());
+      if (data.success) {
+        showToast(editingRecurringId ? 'Fixed expense updated' : 'Fixed expense added');
+        closeRecurringModal();
+        loadRecurring();
+      } else {
+        showToast(data.error || 'Something went wrong', true);
+      }
+    } catch (err) {
+      showToast(`Error: ${err.message}`, true);
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Save';
+    }
+  });
+
   loadData();
+  loadRecurring();
 </script>
 </body>
 </html>
