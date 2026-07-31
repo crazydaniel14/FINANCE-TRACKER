@@ -346,6 +346,13 @@
     .ct-card:hover .ct-card-close { opacity: 0.7; }
     .ct-card-close:hover { opacity: 1 !important; color: var(--red); background: rgba(224,85,85,0.12); }
 
+    .ct-amount-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
     .ct-amount {
       font-size: 1.05rem;
       font-weight: 700;
@@ -355,6 +362,34 @@
       text-align: center;
     }
     .ct-amount.zero { color: var(--text-3); }
+
+    .ct-copy-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex-shrink: 0;
+      transition: color 0.15s, background 0.15s;
+    }
+    .ct-copy-btn:hover   { color: var(--gold); background: var(--gold-dim); }
+    .ct-copy-btn.copied  { color: var(--green); }
+
+    .ct-home-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: var(--text-3);
+      letter-spacing: 0.03em;
+    }
 
     .payment-wheel {
       width: min(150px, 100%);
@@ -1469,6 +1504,21 @@
     </div>
   </div>
 
+  <!-- Spending by card type -->
+  <div class="section-label">Spent by Card</div>
+  <div class="card-type-row" id="card-type-row">
+    <div class="tx-empty" style="padding: 20px 0;"><span class="spinner"></span> Loading…</div>
+  </div>
+
+  <!-- Monthly Fixed Expenses -->
+  <div class="section-label">Monthly Fixed Expenses</div>
+  <div class="recurring-list" id="recurring-list">
+    <div class="tx-empty" style="padding: 20px 0;"><span class="spinner"></span> Loading…</div>
+  </div>
+  <button type="button" class="btn-add-rec" id="btn-add-rec">
+    <span style="font-size: 1.05rem; line-height: 1;">+</span> Add Fixed Expense
+  </button>
+
   <!-- Cashflow & Budgeting -->
   <div class="section-label">Cashflow & Budgeting</div>
   <div class="cashflow-grid">
@@ -1515,21 +1565,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Spending by card type -->
-  <div class="section-label">Spent by Card</div>
-  <div class="card-type-row" id="card-type-row">
-    <div class="tx-empty" style="padding: 20px 0;"><span class="spinner"></span> Loading…</div>
-  </div>
-
-  <!-- Monthly Fixed Expenses -->
-  <div class="section-label">Monthly Fixed Expenses</div>
-  <div class="recurring-list" id="recurring-list">
-    <div class="tx-empty" style="padding: 20px 0;"><span class="spinner"></span> Loading…</div>
-  </div>
-  <button type="button" class="btn-add-rec" id="btn-add-rec">
-    <span style="font-size: 1.05rem; line-height: 1;">+</span> Add Fixed Expense
-  </button>
 
 </div><!-- /container -->
 
@@ -1824,11 +1859,42 @@
   let activeCardSlugs  = [];
   let cardMeta         = {}; // slug -> { name, archived }
   let paymentState     = {}; // slug -> { owed, paid }
+  let includeHomeForCard = {}; // slug -> bool, whether card total includes Home Expenses
+  let lastCardTotals     = {};
+  let lastHomeCardTotals = {};
+  let lastCardPayments   = {};
   const KNOWN_CARD_STYLE = {
     'apple':       { cls: 'apple', img: 'Images/Apple logo.png', alt: 'Apple' },
     'wells fargo': { cls: 'wf',    img: 'Images/WF.png',          alt: 'Wells Fargo' },
     'cash':        { cls: 'cash',  img: 'Images/cash.png',        alt: 'Cash' },
   };
+
+  const COPY_ICON_SVG    = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+  const COPY_CHECK_SVG    = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+  }
+
+  async function copyCtAmount(slug, btn) {
+    const el = document.getElementById('ct-' + slug);
+    if (!el) return;
+    await copyToClipboard(el.textContent);
+    btn.classList.add('copied');
+    btn.innerHTML = COPY_CHECK_SVG;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = COPY_ICON_SVG;
+    }, 1800);
+  }
 
   function slugifyCard(name) {
     return (name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'card';
@@ -1943,7 +2009,7 @@
     setTimeout(() => { t.className = 'toast' + (isError ? ' error' : ''); }, 3000);
   }
 
-  function renderCards(income, expenses, net, homeTotal, cardTotals, cardPayments, carryover, adjustedNet) {
+  function renderCards(income, expenses, net, homeTotal, cardTotals, cardPayments, carryover, adjustedNet, homeCardTotals) {
     document.getElementById('card-income').textContent   = fmt(income);
     document.getElementById('card-expenses').textContent = fmt(expenses);
     document.getElementById('card-home').textContent     = fmt(homeTotal ?? 0);
@@ -1951,17 +2017,26 @@
     lastNetData = { net, carryover, adjustedNet };
     renderNetCard();
 
-    const ct = cardTotals || {};
-    const payments = cardPayments || {};
-    activeCardSlugs.forEach(slug => {
-      const key = cardMeta[slug].name;
-      const val = ct[key] ?? 0;
-      const el  = document.getElementById('ct-' + slug);
-      if (!el) return;
-      el.textContent = fmt(val);
-      el.className   = 'ct-amount' + (val === 0 ? ' zero' : '');
-      updatePaymentOwed(slug, val, payments[key] ?? 0);
-    });
+    lastCardTotals     = cardTotals || {};
+    lastHomeCardTotals = homeCardTotals || {};
+    lastCardPayments   = cardPayments || {};
+    activeCardSlugs.forEach(slug => renderCardAmount(slug));
+  }
+
+  // Recompute one CT card's displayed total (and payment wheel) from cached
+  // totals + the card's own "include Home Expenses" toggle state.
+  function renderCardAmount(slug) {
+    const meta = cardMeta[slug];
+    if (!meta) return;
+    const key      = meta.name;
+    const cardVal  = lastCardTotals[key] ?? 0;
+    const homeVal  = lastHomeCardTotals[key] ?? 0;
+    const val      = cardVal + (includeHomeForCard[slug] ? homeVal : 0);
+    const el       = document.getElementById('ct-' + slug);
+    if (!el) return;
+    el.textContent = fmt(val);
+    el.className   = 'ct-amount' + (val === 0 ? ' zero' : '');
+    updatePaymentOwed(slug, val, lastCardPayments[key] ?? 0);
   }
 
   function renderNetCard() {
@@ -2004,6 +2079,9 @@
       used.add(slug);
       cardMeta[slug]    = { name: c.name, archived: c.archived };
       paymentState[slug] = { owed: 0, paid: 0 };
+      if (!(slug in includeHomeForCard)) {
+        includeHomeForCard[slug] = localStorage.getItem(`ft_includeHomeCard_${slug}`) === '1';
+      }
       if (!c.archived) activeCardSlugs.push(slug);
     });
   }
@@ -2052,11 +2130,52 @@
       }
       card.appendChild(logoWrap);
 
+      const amountRow = document.createElement('div');
+      amountRow.className = 'ct-amount-row';
+
       const amount = document.createElement('div');
       amount.className   = 'ct-amount';
       amount.id           = `ct-${slug}`;
       amount.textContent  = '—';
-      card.appendChild(amount);
+      amountRow.appendChild(amount);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type      = 'button';
+      copyBtn.className = 'ct-copy-btn';
+      copyBtn.setAttribute('aria-label', `Copy ${meta.name} amount`);
+      copyBtn.innerHTML = COPY_ICON_SVG;
+      copyBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        copyCtAmount(slug, copyBtn);
+      });
+      amountRow.appendChild(copyBtn);
+
+      card.appendChild(amountRow);
+
+      const homeToggleWrap = document.createElement('div');
+      homeToggleWrap.className = 'ct-home-toggle-wrap';
+      homeToggleWrap.title = 'Include Home Expenses charged to this card';
+      homeToggleWrap.addEventListener('click', e => e.stopPropagation());
+      const homeToggleLabel = document.createElement('label');
+      homeToggleLabel.className = 'switch-label mini';
+      const homeToggleInput = document.createElement('input');
+      homeToggleInput.type    = 'checkbox';
+      homeToggleInput.id      = `ct-home-toggle-${slug}`;
+      homeToggleInput.checked = !!includeHomeForCard[slug];
+      homeToggleLabel.appendChild(homeToggleInput);
+      const homeToggleSlider = document.createElement('span');
+      homeToggleSlider.className = 'switch-slider';
+      homeToggleLabel.appendChild(homeToggleSlider);
+      homeToggleWrap.appendChild(homeToggleLabel);
+      const homeToggleText = document.createElement('span');
+      homeToggleText.textContent = 'Home';
+      homeToggleWrap.appendChild(homeToggleText);
+      homeToggleInput.addEventListener('change', e => {
+        includeHomeForCard[slug] = e.target.checked;
+        localStorage.setItem(`ft_includeHomeCard_${slug}`, e.target.checked ? '1' : '0');
+        renderCardAmount(slug);
+      });
+      card.appendChild(homeToggleWrap);
 
       const wheel = document.createElement('div');
       wheel.className = 'payment-wheel';
@@ -2440,7 +2559,7 @@
         availableMonths = data.availableMonths;
       }
 
-      renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals, data.cardPayments, data.carryover ?? 0, data.adjustedNet ?? data.net);
+      renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals, data.cardPayments, data.carryover ?? 0, data.adjustedNet ?? data.net, data.homeCardTotals);
 
       // Fallback in case backend doesn't return categoryTotals/typeTotals immediately
       if (!data.categoryTotals || !data.typeTotals) {
