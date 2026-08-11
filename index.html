@@ -73,6 +73,56 @@
       color: var(--text);
     }
 
+    /* ── Account bar (logged-in-as + logout) ── */
+    .account-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 5px;
+      font-size: 0.68rem;
+      color: var(--text-3);
+    }
+    .account-bar button {
+      background: transparent;
+      border: none;
+      color: var(--text-2);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+      font-size: 0.68rem;
+      padding: 0;
+      font-family: inherit;
+      transition: color 0.15s;
+    }
+    .account-bar button:hover { color: var(--gold); }
+
+    /* ── Login gate ── */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 340px;
+      background: #090b17;
+      border: 1px solid var(--border-2);
+      border-radius: 20px;
+      padding: 32px 26px;
+    }
+    .login-error {
+      font-size: 0.78rem;
+      color: var(--red);
+      margin-bottom: 14px;
+      min-height: 1em;
+      text-align: center;
+    }
+
     /* ── Add Entry button ── */
     .btn-add {
       display: flex;
@@ -1454,6 +1504,27 @@
   </style>
 </head>
 <body>
+
+<!-- Login gate -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card">
+    <div class="brand-eyebrow" style="text-align:center;">Personal Finance</div>
+    <h1 style="text-align:center; margin-bottom: 26px;">Finances Tracker</h1>
+    <form id="login-form" novalidate>
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label for="login-username">Username</label>
+        <input id="login-username" type="text" autocomplete="username" required>
+      </div>
+      <div class="form-group" style="margin-bottom: 8px;">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" autocomplete="current-password" required>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <button type="submit" class="btn-save" id="login-submit" style="width: 100%;">Log In</button>
+    </form>
+  </div>
+</div>
+
 <div class="container">
 
   <!-- Header -->
@@ -1461,6 +1532,10 @@
     <div class="brand">
       <span class="brand-eyebrow">Personal Finance</span>
       <h1>Finances Tracker</h1>
+      <div class="account-bar" id="account-bar">
+        <span id="account-username"></span>
+        <button type="button" id="btn-logout">Log out</button>
+      </div>
     </div>
     <button class="btn-add" id="btn-toggle-form">
       <span class="add-icon">+</span>
@@ -1844,6 +1919,13 @@
 <script>
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbxQMMkCdDsavAta55MD0SxkoRoigKCOsb40yS9rhD68UCkSYDGYqlOJccuK1AIAAKY/exec';
 
+  // ── Auth: username identifies which set of sheets to read/write ──
+  let currentUser = null; // username string once logged in
+  function buildUrl(paramsObj) {
+    const params = new URLSearchParams({ ...paramsObj, user: currentUser || '' });
+    return `${GAS_URL}?${params}`;
+  }
+
   const MONTHS = ['January','February','March','April','May','June',
                   'July','August','September','October','November','December'];
 
@@ -1935,7 +2017,7 @@
 
   async function savePayment(cardId) {
     const state = paymentState[cardId];
-    const params = new URLSearchParams({
+    const url = buildUrl({
       action: 'setPayment',
       month: viewMonth,
       year: viewYear,
@@ -1944,7 +2026,7 @@
     });
 
     try {
-      const res = await fetch(`${GAS_URL}?${params}`);
+      const res = await fetch(url);
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Payment save failed');
     } catch (err) {
@@ -2088,7 +2170,7 @@
 
   async function loadCards() {
     try {
-      const data = await fetch(`${GAS_URL}?action=getCards`).then(r => r.json());
+      const data = await fetch(buildUrl({ action: 'getCards' })).then(r => r.json());
       cards = data.cards || [];
     } catch {
       cards = [];
@@ -2320,8 +2402,7 @@
     btn.disabled    = true;
     btn.textContent = 'Adding…';
     try {
-      const params = new URLSearchParams({ action: 'addCard', name });
-      const data   = await fetch(`${GAS_URL}?${params}`).then(r => r.json());
+      const data = await fetch(buildUrl({ action: 'addCard', name })).then(r => r.json());
       if (data.success) {
         showToast('Card added');
         closeAddCardModal();
@@ -2543,7 +2624,7 @@
     status.className = '';
     updateNav();
     try {
-      const res  = await fetch(`${GAS_URL}?action=summary&month=${viewMonth}&year=${viewYear}`);
+      const res  = await fetch(buildUrl({ action: 'summary', month: viewMonth, year: viewYear }));
       const data = await res.json();
 
       if (availableMonths.length === 0 && data.availableMonths?.length) {
@@ -2564,7 +2645,7 @@
       // Fallback in case backend doesn't return categoryTotals/typeTotals immediately
       if (!data.categoryTotals || !data.typeTotals) {
         try {
-          const txUrl = `${GAS_URL}?action=transactions&month=${viewMonth}&year=${viewYear}`;
+          const txUrl = buildUrl({ action: 'transactions', month: viewMonth, year: viewYear });
           const txRes = await fetch(txUrl);
           const txData = await txRes.json();
           
@@ -2642,12 +2723,12 @@
       : { category: document.getElementById('f-category').value,
           expType:  selectedExpType };
 
-    const params = editingTransaction
-      ? new URLSearchParams({ action: 'update', source: editingTransaction.source, rowIndex: editingTransaction.rowIndex, ...base, ...extra })
-      : new URLSearchParams({ action: 'append', table: selectedTable, ...base, ...extra });
+    const url = editingTransaction
+      ? buildUrl({ action: 'update', source: editingTransaction.source, rowIndex: editingTransaction.rowIndex, ...base, ...extra })
+      : buildUrl({ action: 'append', table: selectedTable, ...base, ...extra });
 
     try {
-      const res  = await fetch(`${GAS_URL}?${params}`);
+      const res  = await fetch(url);
       const data = await res.json();
       if (data.success) {
         showToast(editingTransaction ? 'Entry updated' : 'Entry saved');
@@ -2864,8 +2945,8 @@
   async function fetchCardTransactions() {
     if (!activeCardMeta) return;
     try {
-      const cardParam = activeCardMeta.key ? `&cardType=${encodeURIComponent(activeCardMeta.key)}` : '';
-      const url  = `${GAS_URL}?action=transactions&source=expenses${cardParam}&month=${viewMonth}&year=${viewYear}`;
+      const cardParams = activeCardMeta.key ? { cardType: activeCardMeta.key } : {};
+      const url  = buildUrl({ action: 'transactions', source: 'expenses', month: viewMonth, year: viewYear, ...cardParams });
       const data = await fetch(url).then(r => r.json());
       let txns = (data.transactions || []).filter(t => t.source === 'expenses');
       if (!activeCardMeta.key) {
@@ -3042,7 +3123,7 @@
 
   async function fetchIncomeTxns() {
     try {
-      const url  = `${GAS_URL}?action=transactions&source=expenses&month=${viewMonth}&year=${viewYear}`;
+      const url  = buildUrl({ action: 'transactions', source: 'expenses', month: viewMonth, year: viewYear });
       const data = await fetch(url).then(r => r.json());
       allIncomeTxns = (data.transactions || []).filter(t => (t.expType || '').toLowerCase() === 'income');
 
@@ -3099,7 +3180,7 @@
 
   async function fetchHomeTxns() {
     try {
-      const url  = `${GAS_URL}?action=transactions&source=home&month=${viewMonth}&year=${viewYear}`;
+      const url  = buildUrl({ action: 'transactions', source: 'home', month: viewMonth, year: viewYear });
       const data = await fetch(url).then(r => r.json());
       homeTxns   = (data.transactions || []).filter(t => t.source === 'home');
 
@@ -3292,8 +3373,7 @@
       const name = pendingArchiveCardName;
 
       try {
-        const params = new URLSearchParams({ action: 'archiveCard', name });
-        const data   = await fetch(`${GAS_URL}?${params}`).then(r => r.json());
+        const data = await fetch(buildUrl({ action: 'archiveCard', name })).then(r => r.json());
         if (data.success) {
           closeConfirm();
           await loadCards();
@@ -3316,7 +3396,7 @@
       const id = pendingDeleteRecurring.id;
 
       try {
-        const url  = `${GAS_URL}?action=deleteRecurring&id=${encodeURIComponent(id)}`;
+        const url  = buildUrl({ action: 'deleteRecurring', id });
         const data = await fetch(url).then(r => r.json());
         if (data.success) {
           closeConfirm();
@@ -3341,7 +3421,7 @@
     const modalSource = pendingModalSource;
 
     try {
-      const url  = `${GAS_URL}?action=delete&source=${encodeURIComponent(source)}&rowIndex=${rowIndex}`;
+      const url  = buildUrl({ action: 'delete', source, rowIndex });
       const data = await fetch(url).then(r => r.json());
 
       if (data.success) {
@@ -3379,7 +3459,7 @@
   async function loadRecurring() {
     const container = document.getElementById('recurring-list');
     try {
-      const url  = `${GAS_URL}?action=getRecurring&month=${viewMonth}&year=${viewYear}`;
+      const url  = buildUrl({ action: 'getRecurring', month: viewMonth, year: viewYear });
       const data = await fetch(url).then(r => r.json());
       recurringItems = data.recurring || [];
       renderRecurring();
@@ -3460,8 +3540,7 @@
     if (item) item.charged = charged;
     renderRecurring();
     try {
-      const params = new URLSearchParams({ action: 'toggleRecurring', id, month: viewMonth, year: viewYear, charged });
-      const data   = await fetch(`${GAS_URL}?${params}`).then(r => r.json());
+      const data = await fetch(buildUrl({ action: 'toggleRecurring', id, month: viewMonth, year: viewYear, charged })).then(r => r.json());
       if (!data.success) throw new Error(data.error || 'Toggle failed');
       loadData();
     } catch (err) {
@@ -3503,7 +3582,7 @@
     btn.disabled    = true;
     btn.textContent = 'Saving…';
 
-    const params = new URLSearchParams({
+    const url = buildUrl({
       action:   editingRecurringId ? 'updateRecurring' : 'addRecurring',
       id:       editingRecurringId || '',
       name:     document.getElementById('rf-name').value.trim(),
@@ -3513,7 +3592,7 @@
     });
 
     try {
-      const data = await fetch(`${GAS_URL}?${params}`).then(r => r.json());
+      const data = await fetch(url).then(r => r.json());
       if (data.success) {
         showToast(editingRecurringId ? 'Fixed expense updated' : 'Fixed expense added');
         closeRecurringModal();
@@ -3529,11 +3608,68 @@
     }
   });
 
-  (async () => {
-    await loadCards();
-    loadData();
-    loadRecurring();
-  })();
+  // ── Login gate ──
+  function initApp() {
+    (async () => {
+      await loadCards();
+      loadData();
+      loadRecurring();
+    })();
+  }
+
+  function showLoggedInUI(username) {
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('account-bar').style.display = 'flex';
+    document.getElementById('account-username').textContent = `Logged in as ${username}`;
+  }
+
+  function checkStoredAuth() {
+    try {
+      const auth = JSON.parse(localStorage.getItem('ft_auth') || 'null');
+      if (!auth || !auth.username) return false;
+      currentUser = auth.username;
+      showLoggedInUI(auth.username);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  document.getElementById('login-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn   = document.getElementById('login-submit');
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = '';
+    btn.disabled    = true;
+    btn.textContent = 'Logging in…';
+
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    try {
+      const data = await fetch(buildUrl({ action: 'login', username, password })).then(r => r.json());
+      if (data.success) {
+        currentUser = data.username;
+        localStorage.setItem('ft_auth', JSON.stringify({ username: data.username }));
+        showLoggedInUI(data.username);
+        initApp();
+      } else {
+        errEl.textContent = data.error || 'Invalid username or password';
+      }
+    } catch (err) {
+      errEl.textContent = `Error: ${err.message}`;
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Log In';
+    }
+  });
+
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    localStorage.removeItem('ft_auth');
+    location.reload();
+  });
+
+  if (checkStoredAuth()) initApp();
 </script>
 </body>
 </html>
