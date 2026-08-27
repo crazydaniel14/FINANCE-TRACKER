@@ -1922,7 +1922,12 @@
   // ── Auth: username identifies which set of sheets to read/write ──
   let currentUser = null; // username string once logged in
   function buildUrl(paramsObj) {
-    const params = new URLSearchParams({ ...paramsObj, user: currentUser || '' });
+    const requestUser = paramsObj.username || paramsObj.user || currentUser || '';
+    const params = new URLSearchParams({
+      user: requestUser,
+      username: requestUser,
+      ...paramsObj,
+    });
     return `${GAS_URL}?${params}`;
   }
 
