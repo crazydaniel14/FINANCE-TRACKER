@@ -29,12 +29,94 @@
       --amber:       #d4903a;
     }
 
+    /* ── Theme palettes (settings-selectable) ── */
+    :root[data-theme="blush"] {
+      --bg:          #150c13;
+      --surface:     #1c1119;
+      --surface-2:   #20141c;
+      --border:      #2b1a26;
+      --border-2:    #35202e;
+      --gold:        #e88ab0;
+      --gold-h:      #f0a8c6;
+      --gold-dim:    rgba(232, 138, 176, 0.1);
+      --gold-glow:   rgba(232, 138, 176, 0.25);
+      --gold-ring:   rgba(232, 138, 176, 0.18);
+      --text:        #f7eef3;
+      --text-2:      #b98aa0;
+      --text-3:      #5c3a4c;
+      --green:       #3ecf8e;
+      --red:         #e0637d;
+      --blue:        #c58ce0;
+      --amber:       #e0a15a;
+    }
+
+    :root[data-theme="daylight"] {
+      --bg:          #f3f6fc;
+      --surface:     #ffffff;
+      --surface-2:   #f0f4fa;
+      --border:      #e1e7f0;
+      --border-2:    #cdd7e6;
+      --gold:        #3169e0;
+      --gold-h:      #4d80ea;
+      --gold-dim:    rgba(49, 105, 224, 0.08);
+      --gold-glow:   rgba(49, 105, 224, 0.18);
+      --gold-ring:   rgba(49, 105, 224, 0.15);
+      --text:        #172033;
+      --text-2:      #5a6b85;
+      --text-3:      #a3b1c7;
+      --green:       #1f9d63;
+      --red:         #d33c46;
+      --blue:        #3169e0;
+      --amber:       #c17a1f;
+    }
+
+    :root[data-theme="emerald"] {
+      --bg:          #060f0d;
+      --surface:     #0b1613;
+      --surface-2:   #0e1b17;
+      --border:      #142621;
+      --border-2:    #1b322b;
+      --gold:        #35c98a;
+      --gold-h:      #58dba3;
+      --gold-dim:    rgba(53, 201, 138, 0.08);
+      --gold-glow:   rgba(53, 201, 138, 0.22);
+      --gold-ring:   rgba(53, 201, 138, 0.15);
+      --text:        #ecf7f2;
+      --text-2:      #7ba798;
+      --text-3:      #33564a;
+      --green:       #35c98a;
+      --red:         #e05555;
+      --blue:        #58a9db;
+      --amber:       #d4903a;
+    }
+
+    :root[data-theme="slate"] {
+      --bg:          #080b12;
+      --surface:     #0d1119;
+      --surface-2:   #10151f;
+      --border:      #171d2c;
+      --border-2:    #1e2638;
+      --gold:        #4fa3e0;
+      --gold-h:      #6fb7ea;
+      --gold-dim:    rgba(79, 163, 224, 0.08);
+      --gold-glow:   rgba(79, 163, 224, 0.22);
+      --gold-ring:   rgba(79, 163, 224, 0.15);
+      --text:        #eaf1fa;
+      --text-2:      #7690ac;
+      --text-3:      #384860;
+      --green:       #3ecf8e;
+      --red:         #e05555;
+      --blue:        #4fa3e0;
+      --amber:       #d4903a;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       padding: 28px 18px 48px;
+      transition: background 0.25s ease, color 0.25s ease;
     }
 
     .container {
@@ -78,23 +160,71 @@
       display: none;
       align-items: center;
       gap: 8px;
-      margin-top: 5px;
-      font-size: 0.68rem;
-      color: var(--text-3);
+      margin-top: 8px;
     }
-    .account-bar button {
-      background: transparent;
-      border: none;
+    .account-chip {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: 999px;
+      padding: 3px 12px 3px 3px;
+    }
+    .account-avatar {
+      width: 21px; height: 21px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-h) 100%);
+      color: #07090f;
+      font-size: 0.62rem;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      letter-spacing: 0;
+    }
+    .account-name {
+      font-size: 0.7rem;
+      font-weight: 600;
       color: var(--text-2);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-      cursor: pointer;
-      font-size: 0.68rem;
-      padding: 0;
-      font-family: inherit;
-      transition: color 0.15s;
+      letter-spacing: 0.01em;
+      max-width: 140px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .account-bar button:hover { color: var(--gold); }
+    .btn-logout {
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      color: var(--text-3);
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      padding: 0;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .btn-logout:hover { color: var(--red); border-color: rgba(224,85,85,0.35); background: rgba(224,85,85,0.1); }
+
+    /* ── Header action buttons (Add Entry + Settings) ── */
+    .header-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .btn-settings {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      color: var(--text-3);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s, transform 0.15s;
+    }
+    .btn-settings:hover  { color: var(--gold); border-color: var(--gold-ring); background: var(--gold-dim); }
+    .btn-settings:active { transform: scale(0.92) rotate(30deg); }
 
     /* ── Login gate ── */
     .login-overlay {
@@ -155,6 +285,7 @@
     .month-nav {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 14px;
       margin-bottom: 24px;
     }
@@ -330,10 +461,10 @@
       flex-shrink: 0;
     }
     .ct-logo-wrap.apple  { background: #000; }
-    .ct-logo-wrap.wf     { background: #fff; padding: 4px; }
+    .ct-logo-wrap.wf     { background: #fff; padding: 4px; border: 1px solid var(--border-2); }
     .ct-logo-wrap.cash   { background: transparent; }
-    .ct-logo-wrap.chase  { background: #fff; padding: 6px; }
-    .ct-logo-wrap.capone { background: #fff; padding: 5px; }
+    .ct-logo-wrap.chase  { background: #fff; padding: 6px; border: 1px solid var(--border-2); }
+    .ct-logo-wrap.capone { background: #fff; padding: 5px; border: 1px solid var(--border-2); }
     .ct-logo-wrap.generic {
       background: var(--gold-dim);
       border: 1px solid rgba(201,168,76,0.2);
@@ -403,6 +534,35 @@
     }
     .ct-card:hover .ct-card-close { opacity: 0.7; }
     .ct-card-close:hover { opacity: 1 !important; color: var(--red); background: rgba(224,85,85,0.12); }
+
+    .ct-card-drag-handle {
+      position: absolute;
+      top: 8px; left: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      color: var(--text-3);
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      cursor: grab;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+      z-index: 3;
+      padding: 0;
+      touch-action: none;
+    }
+    .ct-card:hover .ct-card-drag-handle { opacity: 0.7; }
+    .ct-card-drag-handle:hover { opacity: 1 !important; color: var(--gold); background: var(--gold-dim); }
+    .ct-card.dragging {
+      opacity: 0.92;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+      cursor: grabbing;
+    }
+    .ct-card-placeholder {
+      border-radius: 14px;
+      border: 1.5px dashed var(--border-2);
+      background: var(--gold-dim);
+    }
 
     .ct-amount-row {
       display: flex;
@@ -786,6 +946,54 @@
 
     .col-span { grid-column: 1 / -1; }
 
+    /* ── Settings modal ── */
+    .settings-section { margin-bottom: 24px; }
+    .settings-hint {
+      font-size: 0.68rem;
+      color: var(--text-3);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    .settings-hint span { color: var(--text-2); font-weight: 600; }
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 10px;
+    }
+    .theme-swatch {
+      background: var(--bg);
+      border: 1.5px solid var(--border-2);
+      border-radius: 12px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    }
+    .theme-swatch:hover { border-color: var(--gold-ring); }
+    .theme-swatch:active { transform: scale(0.97); }
+    .theme-swatch.active {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-ring);
+    }
+    .theme-swatch-preview {
+      width: 100%;
+      height: 34px;
+      border-radius: 8px;
+      display: block;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .theme-swatch-name {
+      font-size: 0.66rem;
+      font-weight: 600;
+      color: var(--text-2);
+      text-align: center;
+      line-height: 1.3;
+    }
+    .theme-swatch.active .theme-swatch-name { color: var(--text); }
+
     /* ── Expense type pills ── */
     .exptype-section { margin-bottom: 22px; }
     .exptype-pills { display: flex; gap: 8px; }
@@ -878,7 +1086,7 @@
       overflow: hidden; flex-shrink: 0;
     }
     .card-modal-logo.apple { background: #000; }
-    .card-modal-logo.wf    { background: #fff; padding: 3px; }
+    .card-modal-logo.wf    { background: #fff; padding: 3px; border: 1px solid var(--border-2); }
     .card-modal-logo.cash  { background: transparent; }
     .card-modal-logo img   { width: 100%; height: 100%; object-fit: contain; display: block; }
     .card-modal-name  { font-size: 1rem; font-weight: 700; color: var(--text); }
@@ -946,6 +1154,28 @@
     .tx-card.unnecessary { border-left-color: var(--red);   }
     .tx-card.income      { border-left-color: var(--gold);  }
     .tx-card.home-tx     { border-left-color: var(--blue);  }
+
+    .tx-card.pickable { cursor: pointer; }
+    .tx-card.pickable.selected {
+      background: var(--gold-dim);
+      border-color: rgba(201,168,76,0.3);
+      box-shadow: 0 0 0 1px var(--gold-ring);
+    }
+    .tx-pick {
+      width: 18px; height: 18px;
+      border-radius: 5px;
+      border: 1.5px solid var(--border-2);
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .tx-pick svg { opacity: 0; transition: opacity 0.1s; color: #07090f; }
+    .tx-pick.checked {
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+    .tx-pick.checked svg { opacity: 1; }
 
     .tx-icon {
       width: 38px; height: 38px;
@@ -1541,14 +1771,24 @@
       <span class="brand-eyebrow">Personal Finance</span>
       <h1>Finances Tracker</h1>
       <div class="account-bar" id="account-bar">
-        <span id="account-username"></span>
-        <button type="button" id="btn-logout">Log out</button>
+        <div class="account-chip" id="account-chip">
+          <span class="account-avatar" id="account-avatar"></span>
+          <span class="account-name" id="account-username"></span>
+        </div>
+        <button type="button" class="btn-logout" id="btn-logout" title="Log out" aria-label="Log out">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
       </div>
     </div>
-    <button class="btn-add" id="btn-toggle-form">
-      <span class="add-icon">+</span>
-      Add Entry
-    </button>
+    <div class="header-actions">
+      <button class="btn-add" id="btn-toggle-form">
+        <span class="add-icon">+</span>
+        Add Entry
+      </button>
+      <button type="button" class="btn-settings" id="btn-settings" title="Settings" aria-label="Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
   </div>
 
   <!-- Month navigation -->
@@ -1582,7 +1822,7 @@
       <div id="card-net-carryover" class="carryover-label"></div>
     </div>
     <div class="card card-clickable" id="home-summary-card">
-      <div class="label">Home Transactions</div>
+      <div class="label" id="home-card-label">Home Transactions</div>
       <div class="value amber" id="card-home">—</div>
     </div>
   </div>
@@ -1664,7 +1904,7 @@
     <!-- Table selector -->
     <div class="table-toggle" id="entry-table-toggle">
       <button type="button" class="toggle-opt active" data-table="expenses">My Expenses</button>
-      <button type="button" class="toggle-opt" data-table="home">Home Expenses</button>
+      <button type="button" class="toggle-opt" data-table="home" id="entry-toggle-home-label">Home Expenses</button>
     </div>
 
     <form id="entry-form" class="mode-expenses" novalidate>
@@ -1775,7 +2015,7 @@
       <div class="card-modal-meta">
         <div class="card-modal-logo" style="background:rgba(212,144,58,0.12);font-size:1.1rem;color:var(--amber);">⌂</div>
         <div>
-          <div class="card-modal-name">Home Expenses</div>
+          <div class="card-modal-name" id="home-modal-card-name">Home Expenses</div>
           <div class="card-modal-total" id="home-modal-total"></div>
         </div>
       </div>
@@ -1918,6 +2158,29 @@
         <button type="submit" class="btn-save" id="ac-submit">Add Card</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-overlay" id="settings-modal-overlay" role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="modal-card" id="settings-modal-card" style="max-width: 480px;">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="modal-title">Settings</div>
+      <button class="modal-close" id="settings-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="settings-section">
+      <label class="field-label">Theme</label>
+      <div class="theme-grid" id="theme-grid"></div>
+    </div>
+
+    <div class="settings-section">
+      <label class="field-label" for="settings-home-label">Home Summary Card Name</label>
+      <input type="text" id="settings-home-label" placeholder="Home" maxlength="24">
+      <div class="settings-hint">Used across the app, e.g. "<span class="settings-home-preview">Home</span> Transactions" and "<span class="settings-home-preview">Home</span> Expenses".</div>
+    </div>
   </div>
 </div>
 
@@ -2171,7 +2434,121 @@
     renderNetCard();
   });
 
+  // ── Settings: theme palettes + home-card label (per user) ──
+  const THEMES = [
+    { id: 'midnight', name: 'Midnight Gold', c1: '#07090f', c2: '#c9a84c' },
+    { id: 'blush',    name: 'Blush Rose',    c1: '#150c13', c2: '#e88ab0' },
+    { id: 'daylight', name: 'Daylight',      c1: '#f3f6fc', c2: '#3169e0' },
+    { id: 'emerald',  name: 'Emerald',       c1: '#060f0d', c2: '#35c98a' },
+    { id: 'slate',    name: 'Ocean Slate',   c1: '#080b12', c2: '#4fa3e0' },
+  ];
+  let currentTheme = 'midnight';
+  let homeLabel    = 'Home';
+
+  const themeStorageKey     = () => `ft_theme_${currentUser || 'default'}`;
+  const homeLabelStorageKey = () => `ft_homeLabel_${currentUser || 'default'}`;
+
+  function applyTheme(theme) {
+    currentTheme = theme;
+    if (theme === 'midnight') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', theme);
+    document.querySelectorAll('.theme-swatch').forEach(b => {
+      b.classList.toggle('active', b.dataset.theme === theme);
+    });
+  }
+
+  function setTheme(theme) {
+    applyTheme(theme);
+    localStorage.setItem(themeStorageKey(), theme);
+  }
+
+  function renderThemeGrid() {
+    const grid = document.getElementById('theme-grid');
+    grid.innerHTML = '';
+    THEMES.forEach(t => {
+      const btn = document.createElement('button');
+      btn.type      = 'button';
+      btn.className = 'theme-swatch' + (t.id === currentTheme ? ' active' : '');
+      btn.dataset.theme = t.id;
+      btn.innerHTML = `<span class="theme-swatch-preview" style="background:linear-gradient(135deg, ${t.c1}, ${t.c2});"></span><span class="theme-swatch-name">${t.name}</span>`;
+      btn.addEventListener('click', () => setTheme(t.id));
+      grid.appendChild(btn);
+    });
+  }
+
+  function applyHomeLabel() {
+    const summaryLabel = document.getElementById('home-card-label');
+    if (summaryLabel) summaryLabel.textContent = `${homeLabel} Transactions`;
+    const modalName = document.getElementById('home-modal-card-name');
+    if (modalName) modalName.textContent = `${homeLabel} Expenses`;
+    const toggleLabel = document.getElementById('entry-toggle-home-label');
+    if (toggleLabel) toggleLabel.textContent = `${homeLabel} Expenses`;
+    document.querySelectorAll('.settings-home-preview').forEach(el => { el.textContent = homeLabel; });
+  }
+
+  function setHomeLabel(rawValue) {
+    homeLabel = (rawValue || '').trim() || 'Home';
+    localStorage.setItem(homeLabelStorageKey(), homeLabel);
+    applyHomeLabel();
+    // Update the per-card "include Home Expenses" toggle text/tooltip in
+    // place rather than rebuilding the cards, which would otherwise wipe
+    // their live totals until the next full data reload.
+    document.querySelectorAll('.ct-home-toggle-wrap').forEach(wrap => {
+      wrap.title = `Include ${homeLabel} Expenses charged to this card`;
+    });
+    document.querySelectorAll('.ct-home-toggle-label').forEach(label => {
+      label.textContent = homeLabel;
+    });
+  }
+
+  function loadUserSettings() {
+    currentTheme = localStorage.getItem(themeStorageKey()) || 'midnight';
+    homeLabel    = localStorage.getItem(homeLabelStorageKey()) || 'Home';
+    applyTheme(currentTheme);
+    applyHomeLabel();
+  }
+
+  function openSettingsModal() {
+    renderThemeGrid();
+    document.getElementById('settings-home-label').value = homeLabel;
+    applyHomeLabel();
+    document.getElementById('settings-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSettingsModal() {
+    document.getElementById('settings-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('btn-settings').addEventListener('click', openSettingsModal);
+  document.getElementById('settings-modal-close').addEventListener('click', closeSettingsModal);
+  document.getElementById('settings-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('settings-modal-overlay')) closeSettingsModal();
+  });
+  document.getElementById('settings-home-label').addEventListener('input', e => setHomeLabel(e.target.value));
+
   // ── Card / payment method management ──
+  const cardOrderStorageKey = () => `ft_cardOrder_${currentUser || 'default'}`;
+
+  function applySavedCardOrder() {
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(cardOrderStorageKey()) || '[]'); } catch { saved = []; }
+    if (!Array.isArray(saved) || !saved.length) return;
+    activeCardSlugs.sort((a, b) => {
+      const ai = saved.indexOf(cardMeta[a].name);
+      const bi = saved.indexOf(cardMeta[b].name);
+      return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
+    });
+  }
+
+  function saveCardOrderFromDom() {
+    const container = document.getElementById('card-type-row');
+    const slugs = Array.from(container.querySelectorAll('.ct-card')).map(el => el.dataset.slug);
+    activeCardSlugs = slugs;
+    localStorage.setItem(cardOrderStorageKey(), JSON.stringify(slugs.map(s => cardMeta[s].name)));
+  }
+
   function buildCardState() {
     cardMeta        = {};
     paymentState     = {};
@@ -2188,6 +2565,75 @@
       }
       if (!c.archived) activeCardSlugs.push(slug);
     });
+    applySavedCardOrder();
+  }
+
+  // ── Drag-to-reorder for ct-cards (pointer-based so it works on touch too) ──
+  let cardDragState = null; // { card, placeholder, offsetX, offsetY }
+
+  function startCardDrag(card, e) {
+    const container = document.getElementById('card-type-row');
+    const rect = card.getBoundingClientRect();
+
+    const placeholder = document.createElement('div');
+    placeholder.className = 'ct-card-placeholder';
+    placeholder.style.height = rect.height + 'px';
+    container.insertBefore(placeholder, card.nextSibling);
+
+    cardDragState = {
+      card, placeholder,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+    };
+
+    card.classList.add('dragging');
+    card.style.position = 'fixed';
+    card.style.zIndex   = '80';
+    card.style.width    = rect.width + 'px';
+    card.style.left     = rect.left + 'px';
+    card.style.top      = rect.top + 'px';
+    document.body.appendChild(card);
+
+    card.setPointerCapture(e.pointerId);
+    document.addEventListener('pointermove', onCardDragMove);
+    document.addEventListener('pointerup', onCardDragEnd);
+  }
+
+  function onCardDragMove(e) {
+    if (!cardDragState) return;
+    const { card, offsetX, offsetY, placeholder } = cardDragState;
+    card.style.left = (e.clientX - offsetX) + 'px';
+    card.style.top  = (e.clientY - offsetY) + 'px';
+
+    card.style.pointerEvents = 'none';
+    const elAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+    card.style.pointerEvents = '';
+
+    const container = document.getElementById('card-type-row');
+    const target = elAtPoint ? elAtPoint.closest('.ct-card, .ct-card-add') : null;
+    if (target && target !== card && container.contains(target)) {
+      const rect = target.getBoundingClientRect();
+      const before = e.clientX < rect.left + rect.width / 2;
+      container.insertBefore(placeholder, before ? target : target.nextSibling);
+    }
+  }
+
+  function onCardDragEnd() {
+    if (!cardDragState) return;
+    const { card, placeholder } = cardDragState;
+    card.classList.remove('dragging');
+    card.style.position = '';
+    card.style.zIndex   = '';
+    card.style.width    = '';
+    card.style.left     = '';
+    card.style.top      = '';
+    placeholder.parentNode.insertBefore(card, placeholder);
+    placeholder.remove();
+
+    document.removeEventListener('pointermove', onCardDragMove);
+    document.removeEventListener('pointerup', onCardDragEnd);
+    cardDragState = null;
+    saveCardOrderFromDom();
   }
 
   async function loadCards() {
@@ -2212,6 +2658,20 @@
 
       const card = document.createElement('div');
       card.className = 'ct-card';
+      card.dataset.slug = slug;
+
+      const dragHandle = document.createElement('button');
+      dragHandle.type      = 'button';
+      dragHandle.className = 'ct-card-drag-handle';
+      dragHandle.setAttribute('aria-label', `Reorder ${meta.name}`);
+      dragHandle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>`;
+      dragHandle.addEventListener('click', e => e.stopPropagation());
+      dragHandle.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        startCardDrag(card, e);
+      });
+      card.appendChild(dragHandle);
 
       const closeBtn = document.createElement('button');
       closeBtn.type      = 'button';
@@ -2262,7 +2722,7 @@
 
       const homeToggleWrap = document.createElement('div');
       homeToggleWrap.className = 'ct-home-toggle-wrap';
-      homeToggleWrap.title = 'Include Home Expenses charged to this card';
+      homeToggleWrap.title = `Include ${homeLabel} Expenses charged to this card`;
       homeToggleWrap.addEventListener('click', e => e.stopPropagation());
       const homeToggleLabel = document.createElement('label');
       homeToggleLabel.className = 'switch-label mini';
@@ -2276,7 +2736,8 @@
       homeToggleLabel.appendChild(homeToggleSlider);
       homeToggleWrap.appendChild(homeToggleLabel);
       const homeToggleText = document.createElement('span');
-      homeToggleText.textContent = 'Home';
+      homeToggleText.className   = 'ct-home-toggle-label';
+      homeToggleText.textContent = homeLabel;
       homeToggleWrap.appendChild(homeToggleText);
       homeToggleInput.addEventListener('change', e => {
         includeHomeForCard[slug] = e.target.checked;
@@ -3196,6 +3657,7 @@
 
   function openHomeModal() {
     homeTxns = [];
+    selectedHomeTxnRows = new Set();
     document.getElementById('home-tx-list').innerHTML = '<div class="tx-empty"><span class="spinner"></span> Loading…</div>';
     document.getElementById('home-modal-total').textContent = '';
     document.getElementById('home-msg-box').textContent     = '';
@@ -3209,6 +3671,7 @@
     document.getElementById('home-modal-overlay').classList.remove('visible');
     document.body.style.overflow = '';
     homeTxns = [];
+    selectedHomeTxnRows = new Set();
   }
 
   async function fetchHomeTxns() {
@@ -3222,7 +3685,6 @@
         `${fmt(total)} · ${MONTHS[viewMonth - 1]} ${viewYear}`;
 
       renderHomeTxns(homeTxns);
-      document.getElementById('home-msg-box').textContent = generateReimbursementMsg(homeTxns);
     } catch {
       document.getElementById('home-tx-list').innerHTML = '<div class="tx-empty">Error loading transactions</div>';
     }
@@ -3253,7 +3715,13 @@
 
       groups[dateKey].forEach(t => {
         const card = document.createElement('div');
-        card.className = 'tx-card home-tx';
+        card.className = 'tx-card home-tx pickable';
+        card.dataset.row = t.rowIndex;
+
+        const pick = document.createElement('div');
+        pick.className = 'tx-pick';
+        pick.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+        card.appendChild(pick);
 
         const icon = document.createElement('div');
         icon.className   = 'tx-icon home-tx';
@@ -3299,6 +3767,8 @@
         delBtn.addEventListener('click', e => { e.stopPropagation(); openConfirm(t, 'home'); });
         card.appendChild(delBtn);
 
+        card.addEventListener('click', () => toggleHomeTxnPick(t.rowIndex));
+
         group.appendChild(card);
       });
 
@@ -3307,11 +3777,36 @@
 
     container.innerHTML = '';
     container.appendChild(list);
+    updateHomeTxnPickUI();
+  }
+
+  // ── Reimbursement message: optional per-transaction picker ──
+  // Selection lives only in memory and resets every time the modal is opened
+  // or closed — nothing here is persisted.
+  let selectedHomeTxnRows = new Set();
+
+  function toggleHomeTxnPick(rowIndex) {
+    if (selectedHomeTxnRows.has(rowIndex)) selectedHomeTxnRows.delete(rowIndex);
+    else selectedHomeTxnRows.add(rowIndex);
+    updateHomeTxnPickUI();
+  }
+
+  function updateHomeTxnPickUI() {
+    document.querySelectorAll('#home-tx-list .tx-card[data-row]').forEach(card => {
+      const picked = selectedHomeTxnRows.has(Number(card.dataset.row));
+      card.classList.toggle('selected', picked);
+      const pick = card.querySelector('.tx-pick');
+      if (pick) pick.classList.toggle('checked', picked);
+    });
+    const effective = selectedHomeTxnRows.size
+      ? homeTxns.filter(t => selectedHomeTxnRows.has(t.rowIndex))
+      : homeTxns;
+    document.getElementById('home-msg-box').textContent = generateReimbursementMsg(effective);
   }
 
   function generateReimbursementMsg(txns) {
     if (!txns.length) return '';
-    const heading = `Home Expenses — ${MONTHS[viewMonth - 1]} ${viewYear}`;
+    const heading = `${homeLabel} Expenses — ${MONTHS[viewMonth - 1]} ${viewYear}`;
     const lines   = [heading, ''];
 
     txns.forEach(t => {
@@ -3653,7 +4148,10 @@
   function showLoggedInUI(username) {
     document.getElementById('login-overlay').style.display = 'none';
     document.getElementById('account-bar').style.display = 'flex';
-    document.getElementById('account-username').textContent = `Logged in as ${username}`;
+    document.getElementById('account-username').textContent = username;
+    document.getElementById('account-avatar').textContent = (username || '?').trim().charAt(0).toUpperCase();
+    document.getElementById('account-chip').title = `Logged in as ${username}`;
+    loadUserSettings();
   }
 
   function checkStoredAuth() {
