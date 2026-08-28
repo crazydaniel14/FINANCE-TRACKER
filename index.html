@@ -329,9 +329,11 @@
       overflow: hidden;
       flex-shrink: 0;
     }
-    .ct-logo-wrap.apple { background: #000; }
-    .ct-logo-wrap.wf    { background: #fff; padding: 4px; }
-    .ct-logo-wrap.cash  { background: transparent; }
+    .ct-logo-wrap.apple  { background: #000; }
+    .ct-logo-wrap.wf     { background: #fff; padding: 4px; }
+    .ct-logo-wrap.cash   { background: transparent; }
+    .ct-logo-wrap.chase  { background: #fff; padding: 6px; }
+    .ct-logo-wrap.capone { background: #fff; padding: 5px; }
     .ct-logo-wrap.generic {
       background: var(--gold-dim);
       border: 1px solid rgba(201,168,76,0.2);
@@ -349,11 +351,17 @@
     }
 
     .ct-name {
-      font-size: 0.68rem;
-      font-weight: 600;
-      color: var(--text-2);
-      letter-spacing: 0.04em;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.01em;
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      line-height: 1.25;
+      padding: 0 4px;
     }
 
     /* ── Add-card tile & close (archive) button ── */
@@ -1950,11 +1958,20 @@
   let lastCardTotals     = {};
   let lastHomeCardTotals = {};
   let lastCardPayments   = {};
-  const KNOWN_CARD_STYLE = {
-    'apple':       { cls: 'apple', img: 'Images/Apple logo.png', alt: 'Apple' },
-    'wells fargo': { cls: 'wf',    img: 'Images/WF.png',          alt: 'Wells Fargo' },
-    'cash':        { cls: 'cash',  img: 'Images/cash.png',        alt: 'Cash' },
-  };
+  // Matched by substring against the card's name (case-insensitive), so
+  // e.g. "Chase Sapphire" or "My Capital One Card" still pick up a logo.
+  const KNOWN_CARD_STYLES = [
+    { match: 'apple',       cls: 'apple',  img: 'Images/Apple logo.png',  alt: 'Apple' },
+    { match: 'wells fargo', cls: 'wf',     img: 'Images/WF.png',          alt: 'Wells Fargo' },
+    { match: 'cash',        cls: 'cash',   img: 'Images/cash.png',        alt: 'Cash' },
+    { match: 'chase',       cls: 'chase',  img: 'Images/chase.png',       alt: 'Chase' },
+    { match: 'capital one', cls: 'capone', img: 'Images/Capital One.png', alt: 'Capital One' },
+  ];
+
+  function getKnownCardStyle(name) {
+    const lower = (name || '').toLowerCase();
+    return KNOWN_CARD_STYLES.find(s => lower.includes(s.match)) || null;
+  }
 
   const COPY_ICON_SVG    = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
   const COPY_CHECK_SVG    = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
@@ -2191,7 +2208,7 @@
 
     activeCardSlugs.forEach(slug => {
       const meta  = cardMeta[slug];
-      const known = KNOWN_CARD_STYLE[meta.name.toLowerCase()];
+      const known = getKnownCardStyle(meta.name);
 
       const card = document.createElement('div');
       card.className = 'ct-card';
@@ -2204,18 +2221,22 @@
       closeBtn.addEventListener('click', e => { e.stopPropagation(); openConfirmArchiveCard(meta.name); });
       card.appendChild(closeBtn);
 
-      const logoWrap = document.createElement('div');
       if (known) {
+        const logoWrap = document.createElement('div');
         logoWrap.className = `ct-logo-wrap ${known.cls}`;
         const img = document.createElement('img');
         img.src = known.img;
         img.alt = known.alt;
         logoWrap.appendChild(img);
+        card.appendChild(logoWrap);
       } else {
-        logoWrap.className   = 'ct-logo-wrap generic';
-        logoWrap.textContent = meta.name.slice(0, 2).toUpperCase();
+        // No logo available for this card — show its name in words instead
+        // of a square badge with initials.
+        const nameLabel = document.createElement('div');
+        nameLabel.className   = 'ct-name';
+        nameLabel.textContent = meta.name;
+        card.appendChild(nameLabel);
       }
-      card.appendChild(logoWrap);
 
       const amountRow = document.createElement('div');
       amountRow.className = 'ct-amount-row';
@@ -2895,13 +2916,13 @@
   // cardId is a slug from cardMeta, or null/undefined for "all cards combined"
   function getCardModalMeta(cardId) {
     if (!cardId) {
-      return { key: null, label: 'Total Expenses', generic: true, initials: '$' };
+      return { key: null, label: 'Total Expenses', generic: 'total', initials: '$' };
     }
-    const meta  = cardMeta[cardId];
-    const known = meta ? KNOWN_CARD_STYLE[meta.name.toLowerCase()] : null;
-    if (!meta) return { key: null, label: 'Total Expenses', generic: true, initials: '$' };
+    const meta = cardMeta[cardId];
+    if (!meta) return { key: null, label: 'Total Expenses', generic: 'total', initials: '$' };
+    const known = getKnownCardStyle(meta.name);
     if (known) return { key: meta.name, label: meta.name, cls: known.cls, logo: known.img };
-    return { key: meta.name, label: meta.name, generic: true, initials: meta.name.slice(0, 2).toUpperCase() };
+    return { key: meta.name, label: meta.name, generic: 'unknown' };
   }
 
   function openCardModal(cardId) {
@@ -2909,21 +2930,28 @@
     allTransactions = [];
 
     const logoWrap = document.getElementById('card-modal-logo-wrap');
-    if (activeCardMeta.generic) {
+    logoWrap.removeAttribute('style');
+    logoWrap.innerHTML = '';
+
+    if (activeCardMeta.generic === 'total') {
       logoWrap.className = 'card-modal-logo';
       logoWrap.style.background = 'var(--gold-dim)';
       logoWrap.style.color      = 'var(--gold)';
       logoWrap.style.fontSize   = '1.05rem';
       logoWrap.style.fontWeight = '800';
-      logoWrap.innerHTML = '';
       logoWrap.textContent = activeCardMeta.initials;
+    } else if (activeCardMeta.generic === 'unknown') {
+      // No logo for this card — its full name is already shown as text
+      // right next to this spot, so hide the badge instead of showing initials.
+      logoWrap.className = 'card-modal-logo';
+      logoWrap.style.display = 'none';
     } else {
-      logoWrap.removeAttribute('style');
       logoWrap.className = `card-modal-logo ${activeCardMeta.cls}`;
-      logoWrap.innerHTML = '<img id="card-modal-logo-img" src="" alt="">';
-      const logoImg = document.getElementById('card-modal-logo-img');
+      const logoImg = document.createElement('img');
+      logoImg.id  = 'card-modal-logo-img';
       logoImg.src = activeCardMeta.logo;
       logoImg.alt = activeCardMeta.label;
+      logoWrap.appendChild(logoImg);
     }
 
     document.getElementById('card-modal-name').textContent  = activeCardMeta.label;
