@@ -1097,6 +1097,45 @@
     }
     .account-type-opt.active { background: var(--gold-dim); color: var(--gold); }
 
+    /* ── Payment source picker ── */
+    .pay-source-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .pay-source-opt {
+      background: var(--bg);
+      border: 1.5px solid var(--border-2);
+      border-radius: 12px;
+      color: var(--text);
+      padding: 13px 16px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .pay-source-opt:hover { border-color: var(--gold); background: var(--gold-dim); }
+    .pay-source-opt:active { transform: scale(0.98); }
+
+    /* ── Adjust-balance button on the card transactions modal ── */
+    .btn-adjust-balance {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0.5;
+      flex-shrink: 0;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+    }
+    .btn-adjust-balance:hover { opacity: 1; color: var(--gold); background: var(--gold-dim); }
+
     /* ── Expense type pills ── */
     .exptype-section { margin-bottom: 22px; }
     .exptype-pills { display: flex; gap: 8px; }
@@ -2340,7 +2379,12 @@
           <div class="card-modal-total" id="card-modal-total"></div>
         </div>
       </div>
-      <button class="modal-close" id="card-modal-close" aria-label="Close">✕</button>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <button type="button" class="btn-adjust-balance" id="btn-adjust-balance" title="Adjust balance" aria-label="Adjust balance">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg>
+        </button>
+        <button class="modal-close" id="card-modal-close" aria-label="Close">✕</button>
+      </div>
     </div>
 
     <div class="tx-search-wrap">
@@ -2441,6 +2485,49 @@
   </div>
 </div>
 
+<!-- Payment source modal (credit card payment → which debit account) -->
+<div class="modal-overlay" id="pay-source-modal-overlay" role="dialog" aria-modal="true" aria-label="Payment Source">
+  <div class="modal-card" id="pay-source-modal-card" style="max-width: 360px;">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="modal-title">Payment Source</div>
+      <button class="modal-close" id="pay-source-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="settings-hint" id="pay-source-hint" style="margin-bottom: 14px;"></div>
+    <div class="pay-source-list" id="pay-source-list"></div>
+    <button type="button" class="btn-cancel" id="pay-source-cancel" style="width: 100%; margin-top: 12px;">Cancel</button>
+  </div>
+</div>
+
+<!-- Adjust balance modal (subtle manual correction, from a card's transactions modal) -->
+<div class="modal-overlay" id="adjust-balance-modal-overlay" role="dialog" aria-modal="true" aria-label="Adjust Balance">
+  <div class="modal-card" id="adjust-balance-modal-card" style="max-width: 340px;">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="modal-title">Adjust Balance</div>
+      <button class="modal-close" id="adjust-balance-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="settings-hint" id="adjust-balance-hint" style="margin-bottom: 14px;"></div>
+
+    <div class="amount-section">
+      <label class="field-label" for="adjust-balance-input">Paid So Far</label>
+      <div class="amount-wrap">
+        <span class="amount-sign">$</span>
+        <input id="adjust-balance-input" type="number" min="0" step="0.01" placeholder="0.00">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-cancel" id="adjust-balance-cancel">Cancel</button>
+      <button type="button" class="btn-save" id="adjust-balance-save">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Settings modal -->
 <div class="modal-overlay" id="settings-modal-overlay" role="dialog" aria-modal="true" aria-label="Settings">
   <div class="modal-card" id="settings-modal-card" style="max-width: 480px;">
@@ -2458,6 +2545,7 @@
 
     <div class="settings-section">
       <label class="field-label">Card Amount Display</label>
+      <div class="settings-hint" style="margin-bottom: 8px;">Applies to debit accounts only — a credit card never carries a positive (income) balance, so it always just shows what's owed.</div>
       <div class="amount-mode-list" id="amount-mode-list"></div>
     </div>
 
@@ -2772,13 +2860,91 @@
 
   // Commits whatever's typed in a card's add/reduce box as a delta on top of
   // the existing paid total (negative to correct a payment back down), then
-  // clears the box (one-time use).
+  // clears the box (one-time use). Adding to a credit card is real money
+  // moving from somewhere, so that case asks which debit account it came
+  // from and logs a matching expense there — corrections (negative deltas)
+  // and debit cards' own inputs apply directly, no prompt needed.
   function commitPaymentAdd(cardId, input) {
     const delta = moneyNumber(input.value);
     input.value = '';
     if (!delta) { renderPaymentWheel(cardId); return; }
+    if (cardMeta[cardId].type === 'credit' && delta > 0) {
+      openPaySourceModal(cardId, delta);
+      return;
+    }
     setPayment(cardId, paymentState[cardId].paid + delta);
   }
+
+  // ── Credit-card payments: ask which debit account the money came from ──
+  let pendingCreditPayment = null; // { cardId, delta }
+
+  function openPaySourceModal(cardId, delta) {
+    const debitSlugs = activeCardSlugs.filter(s => cardMeta[s].type === 'debit');
+    if (!debitSlugs.length) {
+      // Nothing to attribute it to — fall back to the old direct behavior.
+      setPayment(cardId, paymentState[cardId].paid + delta);
+      return;
+    }
+
+    pendingCreditPayment = { cardId, delta };
+    document.getElementById('pay-source-hint').textContent =
+      `Adding ${fmt(delta)} to ${cardMeta[cardId].name} — which debit account is this payment coming from?`;
+
+    const list = document.getElementById('pay-source-list');
+    list.innerHTML = '';
+    debitSlugs.forEach(slug => {
+      const btn = document.createElement('button');
+      btn.type      = 'button';
+      btn.className = 'pay-source-opt';
+      btn.textContent = cardMeta[slug].name;
+      btn.addEventListener('click', () => confirmPaySource(slug));
+      list.appendChild(btn);
+    });
+
+    document.getElementById('pay-source-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePaySourceModal() {
+    document.getElementById('pay-source-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+    pendingCreditPayment = null;
+  }
+
+  async function confirmPaySource(debitSlug) {
+    if (!pendingCreditPayment) return;
+    const { cardId, delta } = pendingCreditPayment;
+    const creditMeta = cardMeta[cardId];
+    const debitMeta  = cardMeta[debitSlug];
+    closePaySourceModal();
+
+    setPayment(cardId, paymentState[cardId].paid + delta);
+
+    const todayIso = new Date().toISOString().slice(0, 10);
+    try {
+      const data = await fetch(buildUrl({
+        action:   'append',
+        table:    'expenses',
+        name:     `Payment to ${creditMeta.name}`,
+        date:     todayIso,
+        amount:   delta.toFixed(2),
+        cardType: debitMeta.name,
+        category: 'Payment',
+        expType:  'Essential',
+      })).then(r => r.json());
+      if (!data.success) throw new Error(data.error || 'Could not log the debit transaction');
+      showToast(`Logged ${fmt(delta)} from ${debitMeta.name}`);
+      loadData();
+    } catch (err) {
+      showToast(`Payment saved, but the debit entry failed: ${err.message}`, true);
+    }
+  }
+
+  document.getElementById('pay-source-modal-close').addEventListener('click', closePaySourceModal);
+  document.getElementById('pay-source-cancel').addEventListener('click', closePaySourceModal);
+  document.getElementById('pay-source-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('pay-source-modal-overlay')) closePaySourceModal();
+  });
 
   function updatePaymentOwed(cardId, owed, paid) {
     paymentState[cardId].owed = Math.max(moneyNumber(owed), 0);
@@ -2823,7 +2989,11 @@
     const subEl = document.getElementById('ct-' + slug + '-sub');
     if (!el) return;
 
-    if (amountDisplayMode === 'net') {
+    // Net/split modes mix in income, which only makes sense for debit
+    // accounts — a credit card never carries a positive (income) balance.
+    const effectiveMode = meta.type === 'debit' ? amountDisplayMode : 'expenses';
+
+    if (effectiveMode === 'net') {
       const net = incomeVal - expenseVal;
       if (net > 0) {
         el.textContent = `+${fmt(net)}`;
@@ -2840,7 +3010,7 @@
       el.textContent = fmt(expenseVal);
       el.className   = 'ct-amount' + (expenseVal === 0 ? ' zero' : '');
       if (subEl) {
-        if (amountDisplayMode === 'split' && incomeVal > 0) {
+        if (effectiveMode === 'split' && incomeVal > 0) {
           subEl.textContent  = `+${fmt(incomeVal)}`;
           subEl.style.display = '';
         } else {
@@ -4076,6 +4246,7 @@
   }
 
   let activeCardMeta  = null;
+  let activeCardSlug  = null;
   let allTransactions = [];
 
   // cardId is a slug from cardMeta, or null/undefined for "all cards combined"
@@ -4092,7 +4263,9 @@
 
   function openCardModal(cardId) {
     activeCardMeta  = getCardModalMeta(cardId);
+    activeCardSlug  = cardId || null;
     allTransactions = [];
+    document.getElementById('btn-adjust-balance').style.display = activeCardSlug ? '' : 'none';
 
     const logoWrap = document.getElementById('card-modal-logo-wrap');
     logoWrap.removeAttribute('style');
@@ -4137,8 +4310,44 @@
     document.getElementById('card-modal-overlay').classList.remove('visible');
     document.body.style.overflow = '';
     activeCardMeta  = null;
+    activeCardSlug  = null;
     allTransactions = [];
   }
+
+  // Quiet manual correction for a card's paid-so-far total — meant for
+  // catching a balance up to reality once (e.g. right after adopting the
+  // app), without re-entering every prior transaction or going through the
+  // payment-source prompt, which is for genuinely new payment events.
+  function openAdjustBalanceModal() {
+    if (!activeCardSlug) return;
+    const meta  = cardMeta[activeCardSlug];
+    const state = paymentState[activeCardSlug];
+    document.getElementById('adjust-balance-hint').textContent =
+      `Directly sets how much of ${meta.name}'s ${fmt(state.owed)} owed this month is already paid. Use this to catch up a balance instead of a real payment.`;
+    document.getElementById('adjust-balance-input').value = state.paid > 0 ? state.paid.toFixed(2) : '';
+    document.getElementById('adjust-balance-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('adjust-balance-input').focus(), 80);
+  }
+
+  function closeAdjustBalanceModal() {
+    document.getElementById('adjust-balance-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('btn-adjust-balance').addEventListener('click', openAdjustBalanceModal);
+  document.getElementById('adjust-balance-modal-close').addEventListener('click', closeAdjustBalanceModal);
+  document.getElementById('adjust-balance-cancel').addEventListener('click', closeAdjustBalanceModal);
+  document.getElementById('adjust-balance-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('adjust-balance-modal-overlay')) closeAdjustBalanceModal();
+  });
+  document.getElementById('adjust-balance-save').addEventListener('click', () => {
+    if (!activeCardSlug) return;
+    const val = moneyNumber(document.getElementById('adjust-balance-input').value);
+    setPayment(activeCardSlug, val);
+    closeAdjustBalanceModal();
+    showToast('Balance adjusted');
+  });
 
   async function fetchCardTransactions() {
     if (!activeCardMeta) return;
