@@ -110,6 +110,26 @@
       --amber:       #d4903a;
     }
 
+    :root[data-theme="sakura"] {
+      --bg:          #fdf5f8;
+      --surface:     #ffffff;
+      --surface-2:   #fdf0f5;
+      --border:      #f6dee8;
+      --border-2:    #f0c9db;
+      --gold:        #e0568e;
+      --gold-h:      #ea7aa5;
+      --gold-dim:    rgba(224, 86, 142, 0.08);
+      --gold-glow:   rgba(224, 86, 142, 0.18);
+      --gold-ring:   rgba(224, 86, 142, 0.16);
+      --text:        #3a1f2c;
+      --text-2:      #8a6275;
+      --text-3:      #c99cb2;
+      --green:       #1f9d63;
+      --red:         #d33c46;
+      --blue:        #7a6fd4;
+      --amber:       #c17a1f;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
@@ -495,27 +515,7 @@
       padding: 0 4px;
     }
 
-    /* ── Add-card tile & close (archive) button ── */
-    .ct-card-add {
-      background: transparent;
-      border: 1.5px dashed var(--border-2);
-      border-radius: 14px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 180px;
-      cursor: pointer;
-      color: var(--text-2);
-      font-size: 0.78rem;
-      font-weight: 600;
-      text-align: center;
-      padding: 18px 12px;
-      transition: background 0.15s, border-color 0.15s, color 0.15s;
-    }
-    .ct-card-add:hover { background: var(--surface); border-color: var(--gold-ring); color: var(--gold); }
-    .ct-card-add .add-icon-big { font-size: 1.6rem; line-height: 1; }
+    /* ── Close (archive) button ── */
 
     .ct-card-close {
       position: absolute;
@@ -571,6 +571,13 @@
       gap: 4px;
     }
 
+    .ct-amount-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
     .ct-amount {
       font-size: 1.05rem;
       font-weight: 700;
@@ -579,7 +586,16 @@
       letter-spacing: -0.01em;
       text-align: center;
     }
-    .ct-amount.zero { color: var(--text-3); }
+    .ct-amount.zero  { color: var(--text-3); }
+    .ct-amount.green { color: var(--green); }
+
+    .ct-amount-sub {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--green);
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+    }
 
     .ct-copy-btn {
       background: transparent;
@@ -993,6 +1009,29 @@
       line-height: 1.3;
     }
     .theme-swatch.active .theme-swatch-name { color: var(--text); }
+
+    .amount-mode-list { display: flex; flex-direction: column; gap: 8px; }
+    .amount-mode-opt {
+      text-align: left;
+      background: var(--bg);
+      border: 1.5px solid var(--border-2);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      font-family: inherit;
+    }
+    .amount-mode-opt:hover { border-color: var(--gold-ring); }
+    .amount-mode-opt.active {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-ring);
+    }
+    .amount-mode-name { font-size: 0.8rem; font-weight: 700; color: var(--text); }
+    .amount-mode-opt.active .amount-mode-name { color: var(--gold); }
+    .amount-mode-desc { font-size: 0.68rem; color: var(--text-2); line-height: 1.4; }
 
     /* ── Expense type pills ── */
     .exptype-section { margin-bottom: 22px; }
@@ -1601,6 +1640,32 @@
     .recurring-item:hover {
       background: var(--surface-2);
     }
+    .recurring-item.dragging {
+      opacity: 0.92;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+      cursor: grabbing;
+    }
+    .recurring-placeholder {
+      border-radius: 12px;
+      border: 1.5px dashed var(--border-2);
+      background: var(--gold-dim);
+    }
+    .recurring-drag-handle {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      cursor: grab;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      opacity: 0.45;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+      touch-action: none;
+      padding: 0;
+    }
+    .recurring-item:hover .recurring-drag-handle { opacity: 0.8; }
+    .recurring-drag-handle:hover { opacity: 1 !important; color: var(--gold); background: var(--gold-dim); }
     .recurring-item.charged {
       border-color: rgba(62, 207, 142, 0.2);
       box-shadow: 0 0 12px rgba(62, 207, 142, 0.03);
@@ -2177,6 +2242,18 @@
     </div>
 
     <div class="settings-section">
+      <label class="field-label">Card Amount Display</label>
+      <div class="amount-mode-list" id="amount-mode-list"></div>
+    </div>
+
+    <div class="settings-section">
+      <label class="field-label">Payment Methods</label>
+      <button type="button" class="btn-add-rec" id="settings-add-card-btn">
+        <span style="font-size: 1.05rem; line-height: 1;">+</span> Add Card / Method
+      </button>
+    </div>
+
+    <div class="settings-section">
       <label class="field-label" for="settings-home-label">Home Summary Card Name</label>
       <input type="text" id="settings-home-label" placeholder="Home" maxlength="24">
       <div class="settings-hint">Used across the app, e.g. "<span class="settings-home-preview">Home</span> Transactions" and "<span class="settings-home-preview">Home</span> Expenses".</div>
@@ -2218,9 +2295,10 @@
   let cardMeta         = {}; // slug -> { name, archived }
   let paymentState     = {}; // slug -> { owed, paid }
   let includeHomeForCard = {}; // slug -> bool, whether card total includes Home Expenses
-  let lastCardTotals     = {};
-  let lastHomeCardTotals = {};
-  let lastCardPayments   = {};
+  let lastCardTotals       = {};
+  let lastHomeCardTotals   = {};
+  let lastCardIncomeTotals = {};
+  let lastCardPayments     = {};
   // Matched by substring against the card's name (case-insensitive), so
   // e.g. "Chase Sapphire" or "My Capital One Card" still pick up a logo.
   const KNOWN_CARD_STYLES = [
@@ -2376,7 +2454,7 @@
     setTimeout(() => { t.className = 'toast' + (isError ? ' error' : ''); }, 3000);
   }
 
-  function renderCards(income, expenses, net, homeTotal, cardTotals, cardPayments, carryover, adjustedNet, homeCardTotals) {
+  function renderCards(income, expenses, net, homeTotal, cardTotals, cardPayments, carryover, adjustedNet, homeCardTotals, cardIncomeTotals) {
     document.getElementById('card-income').textContent   = fmt(income);
     document.getElementById('card-expenses').textContent = fmt(expenses);
     document.getElementById('card-home').textContent     = fmt(homeTotal ?? 0);
@@ -2384,26 +2462,56 @@
     lastNetData = { net, carryover, adjustedNet };
     renderNetCard();
 
-    lastCardTotals     = cardTotals || {};
-    lastHomeCardTotals = homeCardTotals || {};
-    lastCardPayments   = cardPayments || {};
+    lastCardTotals       = cardTotals || {};
+    lastHomeCardTotals   = homeCardTotals || {};
+    lastCardIncomeTotals = cardIncomeTotals || {};
+    lastCardPayments     = cardPayments || {};
     activeCardSlugs.forEach(slug => renderCardAmount(slug));
   }
 
   // Recompute one CT card's displayed total (and payment wheel) from cached
-  // totals + the card's own "include Home Expenses" toggle state.
+  // totals + the card's own "include Home Expenses" toggle state + the
+  // user's chosen amount-display mode (expenses only / net / split).
   function renderCardAmount(slug) {
     const meta = cardMeta[slug];
     if (!meta) return;
-    const key      = meta.name;
-    const cardVal  = lastCardTotals[key] ?? 0;
-    const homeVal  = lastHomeCardTotals[key] ?? 0;
-    const val      = cardVal + (includeHomeForCard[slug] ? homeVal : 0);
-    const el       = document.getElementById('ct-' + slug);
+    const key        = meta.name;
+    const cardVal    = lastCardTotals[key] ?? 0;
+    const homeVal    = lastHomeCardTotals[key] ?? 0;
+    const incomeVal  = lastCardIncomeTotals[key] ?? 0;
+    const expenseVal = cardVal + (includeHomeForCard[slug] ? homeVal : 0);
+
+    const el    = document.getElementById('ct-' + slug);
+    const subEl = document.getElementById('ct-' + slug + '-sub');
     if (!el) return;
-    el.textContent = fmt(val);
-    el.className   = 'ct-amount' + (val === 0 ? ' zero' : '');
-    updatePaymentOwed(slug, val, lastCardPayments[key] ?? 0);
+
+    if (amountDisplayMode === 'net') {
+      const net = incomeVal - expenseVal;
+      if (net > 0) {
+        el.textContent = `+${fmt(net)}`;
+        el.className   = 'ct-amount green';
+      } else if (net < 0) {
+        el.textContent = fmt(Math.abs(net));
+        el.className   = 'ct-amount';
+      } else {
+        el.textContent = fmt(0);
+        el.className   = 'ct-amount zero';
+      }
+      if (subEl) subEl.style.display = 'none';
+    } else {
+      el.textContent = fmt(expenseVal);
+      el.className   = 'ct-amount' + (expenseVal === 0 ? ' zero' : '');
+      if (subEl) {
+        if (amountDisplayMode === 'split' && incomeVal > 0) {
+          subEl.textContent  = `+${fmt(incomeVal)}`;
+          subEl.style.display = '';
+        } else {
+          subEl.style.display = 'none';
+        }
+      }
+    }
+
+    updatePaymentOwed(slug, expenseVal, lastCardPayments[key] ?? 0);
   }
 
   function renderNetCard() {
@@ -2441,12 +2549,20 @@
     { id: 'daylight', name: 'Daylight',      c1: '#f3f6fc', c2: '#3169e0' },
     { id: 'emerald',  name: 'Emerald',       c1: '#060f0d', c2: '#35c98a' },
     { id: 'slate',    name: 'Ocean Slate',   c1: '#080b12', c2: '#4fa3e0' },
+    { id: 'sakura',   name: 'Sakura',        c1: '#fdf5f8', c2: '#e0568e' },
   ];
-  let currentTheme = 'midnight';
-  let homeLabel    = 'Home';
+  const AMOUNT_MODES = [
+    { id: 'expenses', name: 'Expenses Only', desc: 'Shows the card balance you owe — same as today.' },
+    { id: 'net',      name: 'Expenses + Income (Net)', desc: 'One combined number: green with a + when income covers expenses, otherwise what you still owe.' },
+    { id: 'split',    name: 'Expenses & Income (Split)', desc: 'Expense on top as usual, income below it in smaller green text.' },
+  ];
+  let currentTheme      = 'midnight';
+  let homeLabel         = 'Home';
+  let amountDisplayMode = 'expenses';
 
-  const themeStorageKey     = () => `ft_theme_${currentUser || 'default'}`;
-  const homeLabelStorageKey = () => `ft_homeLabel_${currentUser || 'default'}`;
+  const themeStorageKey      = () => `ft_theme_${currentUser || 'default'}`;
+  const homeLabelStorageKey  = () => `ft_homeLabel_${currentUser || 'default'}`;
+  const amountModeStorageKey = () => `ft_amountMode_${currentUser || 'default'}`;
 
   function applyTheme(theme) {
     currentTheme = theme;
@@ -2501,15 +2617,40 @@
     });
   }
 
+  function renderAmountModeList() {
+    const list = document.getElementById('amount-mode-list');
+    list.innerHTML = '';
+    AMOUNT_MODES.forEach(m => {
+      const btn = document.createElement('button');
+      btn.type      = 'button';
+      btn.className = 'amount-mode-opt' + (m.id === amountDisplayMode ? ' active' : '');
+      btn.dataset.mode = m.id;
+      btn.innerHTML = `<span class="amount-mode-name">${m.name}</span><span class="amount-mode-desc">${m.desc}</span>`;
+      btn.addEventListener('click', () => setAmountMode(m.id));
+      list.appendChild(btn);
+    });
+  }
+
+  function setAmountMode(mode) {
+    amountDisplayMode = mode;
+    localStorage.setItem(amountModeStorageKey(), mode);
+    document.querySelectorAll('.amount-mode-opt').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+    activeCardSlugs.forEach(slug => renderCardAmount(slug));
+  }
+
   function loadUserSettings() {
-    currentTheme = localStorage.getItem(themeStorageKey()) || 'midnight';
-    homeLabel    = localStorage.getItem(homeLabelStorageKey()) || 'Home';
+    currentTheme      = localStorage.getItem(themeStorageKey()) || 'midnight';
+    homeLabel         = localStorage.getItem(homeLabelStorageKey()) || 'Home';
+    amountDisplayMode = localStorage.getItem(amountModeStorageKey()) || 'expenses';
     applyTheme(currentTheme);
     applyHomeLabel();
   }
 
   function openSettingsModal() {
     renderThemeGrid();
+    renderAmountModeList();
     document.getElementById('settings-home-label').value = homeLabel;
     applyHomeLabel();
     document.getElementById('settings-modal-overlay').classList.add('visible');
@@ -2527,6 +2668,10 @@
     if (e.target === document.getElementById('settings-modal-overlay')) closeSettingsModal();
   });
   document.getElementById('settings-home-label').addEventListener('input', e => setHomeLabel(e.target.value));
+  document.getElementById('settings-add-card-btn').addEventListener('click', () => {
+    closeSettingsModal();
+    openAddCardModal();
+  });
 
   // ── Card / payment method management ──
   const cardOrderStorageKey = () => `ft_cardOrder_${currentUser || 'default'}`;
@@ -2610,7 +2755,7 @@
     card.style.pointerEvents = '';
 
     const container = document.getElementById('card-type-row');
-    const target = elAtPoint ? elAtPoint.closest('.ct-card, .ct-card-add') : null;
+    const target = elAtPoint ? elAtPoint.closest('.ct-card') : null;
     if (target && target !== card && container.contains(target)) {
       const rect = target.getBoundingClientRect();
       const before = e.clientX < rect.left + rect.width / 2;
@@ -2701,11 +2846,22 @@
       const amountRow = document.createElement('div');
       amountRow.className = 'ct-amount-row';
 
+      const amountCol = document.createElement('div');
+      amountCol.className = 'ct-amount-col';
+
       const amount = document.createElement('div');
       amount.className   = 'ct-amount';
       amount.id           = `ct-${slug}`;
       amount.textContent  = '—';
-      amountRow.appendChild(amount);
+      amountCol.appendChild(amount);
+
+      const amountSub = document.createElement('div');
+      amountSub.className  = 'ct-amount-sub';
+      amountSub.id          = `ct-${slug}-sub`;
+      amountSub.style.display = 'none';
+      amountCol.appendChild(amountSub);
+
+      amountRow.appendChild(amountCol);
 
       const copyBtn = document.createElement('button');
       copyBtn.type      = 'button';
@@ -2796,13 +2952,6 @@
 
       renderPaymentWheel(slug);
     });
-
-    const addTile = document.createElement('button');
-    addTile.type      = 'button';
-    addTile.className = 'ct-card-add';
-    addTile.innerHTML = `<span class="add-icon-big">+</span><span>Add Card</span>`;
-    addTile.addEventListener('click', openAddCardModal);
-    container.appendChild(addTile);
   }
 
   function wireCtCardWheel(cardId, wheel) {
@@ -3127,7 +3276,7 @@
         availableMonths = data.availableMonths;
       }
 
-      renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals, data.cardPayments, data.carryover ?? 0, data.adjustedNet ?? data.net, data.homeCardTotals);
+      renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals, data.cardPayments, data.carryover ?? 0, data.adjustedNet ?? data.net, data.homeCardTotals, data.cardIncomeTotals);
 
       // Fallback in case backend doesn't return categoryTotals/typeTotals immediately
       if (!data.categoryTotals || !data.typeTotals) {
@@ -3984,12 +4133,101 @@
   let recurringItems     = [];
   let editingRecurringId = null;
 
+  const recurringOrderStorageKey = () => `ft_recurringOrder_${currentUser || 'default'}`;
+
+  function applySavedRecurringOrder() {
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(recurringOrderStorageKey()) || '[]'); } catch { saved = []; }
+    if (!Array.isArray(saved) || !saved.length) return;
+    recurringItems.sort((a, b) => {
+      const ai = saved.indexOf(String(a.id));
+      const bi = saved.indexOf(String(b.id));
+      return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
+    });
+  }
+
+  function saveRecurringOrderFromDom() {
+    const container = document.getElementById('recurring-list');
+    const ids = Array.from(container.querySelectorAll('.recurring-item')).map(el => el.dataset.id);
+    recurringItems.sort((a, b) => ids.indexOf(String(a.id)) - ids.indexOf(String(b.id)));
+    localStorage.setItem(recurringOrderStorageKey(), JSON.stringify(ids));
+  }
+
+  // ── Drag-to-reorder for Monthly Fixed Expenses (vertical list) ──
+  let recurringDragState = null;
+
+  function startRecurringDrag(item, e) {
+    const container = document.getElementById('recurring-list');
+    const rect = item.getBoundingClientRect();
+
+    const placeholder = document.createElement('div');
+    placeholder.className = 'recurring-placeholder';
+    placeholder.style.height = rect.height + 'px';
+    container.insertBefore(placeholder, item.nextSibling);
+
+    recurringDragState = {
+      item, placeholder,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+    };
+
+    item.classList.add('dragging');
+    item.style.position = 'fixed';
+    item.style.zIndex   = '80';
+    item.style.width    = rect.width + 'px';
+    item.style.left     = rect.left + 'px';
+    item.style.top      = rect.top + 'px';
+    document.body.appendChild(item);
+
+    item.setPointerCapture(e.pointerId);
+    document.addEventListener('pointermove', onRecurringDragMove);
+    document.addEventListener('pointerup', onRecurringDragEnd);
+  }
+
+  function onRecurringDragMove(e) {
+    if (!recurringDragState) return;
+    const { item, offsetX, offsetY, placeholder } = recurringDragState;
+    item.style.left = (e.clientX - offsetX) + 'px';
+    item.style.top  = (e.clientY - offsetY) + 'px';
+
+    item.style.pointerEvents = 'none';
+    const elAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+    item.style.pointerEvents = '';
+
+    const container = document.getElementById('recurring-list');
+    const target = elAtPoint ? elAtPoint.closest('.recurring-item') : null;
+    if (target && target !== item && container.contains(target)) {
+      const rect = target.getBoundingClientRect();
+      const before = e.clientY < rect.top + rect.height / 2;
+      container.insertBefore(placeholder, before ? target : target.nextSibling);
+    }
+  }
+
+  function onRecurringDragEnd() {
+    if (!recurringDragState) return;
+    const { item, placeholder } = recurringDragState;
+    item.classList.remove('dragging');
+    item.style.position = '';
+    item.style.zIndex   = '';
+    item.style.width    = '';
+    item.style.left     = '';
+    item.style.top      = '';
+    placeholder.parentNode.insertBefore(item, placeholder);
+    placeholder.remove();
+
+    document.removeEventListener('pointermove', onRecurringDragMove);
+    document.removeEventListener('pointerup', onRecurringDragEnd);
+    recurringDragState = null;
+    saveRecurringOrderFromDom();
+  }
+
   async function loadRecurring() {
     const container = document.getElementById('recurring-list');
     try {
       const url  = buildUrl({ action: 'getRecurring', month: viewMonth, year: viewYear });
       const data = await fetch(url).then(r => r.json());
       recurringItems = data.recurring || [];
+      applySavedRecurringOrder();
       renderRecurring();
     } catch {
       container.innerHTML = '<div class="tx-empty">Error loading fixed expenses</div>';
@@ -4007,6 +4245,20 @@
     recurringItems.forEach(item => {
       const el = document.createElement('div');
       el.className = 'recurring-item' + (item.charged ? ' charged' : '');
+      el.dataset.id = item.id;
+
+      const dragHandle = document.createElement('button');
+      dragHandle.type      = 'button';
+      dragHandle.className = 'recurring-drag-handle';
+      dragHandle.setAttribute('aria-label', `Reorder ${item.name}`);
+      dragHandle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>`;
+      dragHandle.addEventListener('click', e => e.stopPropagation());
+      dragHandle.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        startRecurringDrag(el, e);
+      });
+      el.appendChild(dragHandle);
 
       const info = document.createElement('div');
       info.className = 'recurring-info';
