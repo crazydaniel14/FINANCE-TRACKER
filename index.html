@@ -631,12 +631,9 @@
       position: relative;
       display: grid;
       place-items: center;
-      touch-action: none;
-      cursor: grab;
       user-select: none;
       margin-top: 2px;
     }
-    .payment-wheel:active { cursor: grabbing; }
     .payment-wheel svg {
       width: 100%;
       height: 100%;
@@ -1677,6 +1674,12 @@
       flex-direction: column;
       gap: 3px;
     }
+    .recurring-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
     .recurring-name {
       font-size: 0.85rem;
       font-weight: 600;
@@ -1684,7 +1687,25 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      min-width: 0;
     }
+    .recurring-balance {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--gold);
+      background: var(--gold-dim);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 6px;
+      padding: 1px 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .recurring-balance.full {
+      color: var(--green);
+      background: rgba(62,207,142,0.1);
+      border-color: rgba(62,207,142,0.25);
+    }
+    .recurring-item.partial .recurring-amount { color: var(--amber); }
     .recurring-meta {
       font-size: 0.68rem;
       color: var(--text-2);
@@ -1750,6 +1771,66 @@
       background: var(--surface);
       border-color: var(--gold-ring);
       color: var(--gold);
+    }
+
+    /* ── Fractional fixed-expense payment controls ── */
+    .recurring-frac-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .btn-frac {
+      background: var(--bg);
+      border: 1.5px solid var(--border-2);
+      border-radius: 7px;
+      color: var(--text-2);
+      font-size: 0.66rem;
+      font-weight: 700;
+      font-family: inherit;
+      width: 30px; height: 26px;
+      padding: 0;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .btn-frac:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+    .btn-frac:disabled { opacity: 0.4; cursor: not-allowed; }
+    .frac-input {
+      width: 54px; height: 26px;
+      background: var(--bg);
+      border: 1.5px solid var(--border-2);
+      border-radius: 7px;
+      color: var(--text);
+      font-size: 0.66rem;
+      font-weight: 700;
+      font-family: inherit;
+      text-align: center;
+      outline: none;
+      padding: 0 4px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .frac-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-ring); }
+    .frac-input::placeholder { color: var(--text-3); }
+    .frac-input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Settings modal toggle rows ── */
+    .settings-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .settings-toggle-row .field-label { margin-bottom: 3px; }
+    .settings-toggle-row .settings-hint { margin-top: 0; }
+
+    /* ── Card payment tracker (wheel + add-amount box) ── */
+    .ct-payment-tracker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
     }
 
     /* Custom premium toggle switch */
@@ -2253,6 +2334,28 @@
       </button>
     </div>
 
+    <div class="settings-section settings-toggle-row">
+      <div>
+        <label class="field-label">Card Payment Tracker</label>
+        <div class="settings-hint">Shows the paid-vs-owed wheel and an add-amount box on each card. Turn off for more compact cards.</div>
+      </div>
+      <label class="switch-label mini">
+        <input type="checkbox" id="settings-payment-tracker-toggle" checked>
+        <span class="switch-slider"></span>
+      </label>
+    </div>
+
+    <div class="settings-section settings-toggle-row">
+      <div>
+        <label class="field-label">Fractional Fixed-Expense Payments</label>
+        <div class="settings-hint">Adds 1/4, 1/2, and custom-amount buttons to each fixed expense instead of a simple on/off switch.</div>
+      </div>
+      <label class="switch-label mini">
+        <input type="checkbox" id="settings-fractional-recurring-toggle">
+        <span class="switch-slider"></span>
+      </label>
+    </div>
+
     <div class="settings-section">
       <label class="field-label" for="settings-home-label">Home Summary Card Name</label>
       <input type="text" id="settings-home-label" placeholder="Home" maxlength="24">
@@ -2419,27 +2522,22 @@
     fill.style.strokeDashoffset = WHEEL_CIRCUMFERENCE * (1 - ratio);
     thumb.style.transform = `rotate(${ratio * 360}deg)`;
 
-    wheel.setAttribute('aria-valuemax', owed.toFixed(2));
-    wheel.setAttribute('aria-valuenow', paid.toFixed(2));
-    wheel.setAttribute('aria-valuetext', `${fmt(paid)} paid of ${fmt(owed)}`);
-    input.max = owed.toFixed(2);
-    input.disabled = owed <= 0;
-    if (document.activeElement !== input) {
-      input.value = paid > 0 ? paid.toFixed(2) : '';
-    }
+    // The input is a one-time "add an amount" box, not a live editor of the
+    // running total — it always stays blank/disabled rather than mirroring `paid`.
+    input.max      = left.toFixed(2);
+    input.disabled = owed <= 0 || left <= 0;
 
     document.getElementById(`wheel-${cardId}-paid`).textContent = fmt(paid);
     document.getElementById(`wheel-${cardId}-left`).textContent = `${fmt(left)} left`;
   }
 
-  function setPaymentFromPointer(cardId, event) {
-    const wheel = event.currentTarget;
-    const rect = wheel.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const angle = Math.atan2(event.clientY - cy, event.clientX - cx);
-    const normalized = (angle + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2);
-    setPayment(cardId, paymentState[cardId].owed * (normalized / (Math.PI * 2)));
+  // Commits whatever's typed in a card's "add amount" box as an increment on
+  // top of the existing paid total, then clears the box (one-time use).
+  function commitPaymentAdd(cardId, input) {
+    const delta = moneyNumber(input.value);
+    input.value = '';
+    if (!(delta > 0)) { renderPaymentWheel(cardId); return; }
+    setPayment(cardId, paymentState[cardId].paid + delta);
   }
 
   function updatePaymentOwed(cardId, owed, paid) {
@@ -2556,13 +2654,17 @@
     { id: 'net',      name: 'Expenses + Income (Net)', desc: 'One combined number: green with a + when income covers expenses, otherwise what you still owe.' },
     { id: 'split',    name: 'Expenses & Income (Split)', desc: 'Expense on top as usual, income below it in smaller green text.' },
   ];
-  let currentTheme      = 'midnight';
-  let homeLabel         = 'Home';
-  let amountDisplayMode = 'expenses';
+  let currentTheme         = 'midnight';
+  let homeLabel            = 'Home';
+  let amountDisplayMode    = 'expenses';
+  let showPaymentTracker   = true;
+  let fractionalRecurring  = false;
 
-  const themeStorageKey      = () => `ft_theme_${currentUser || 'default'}`;
-  const homeLabelStorageKey  = () => `ft_homeLabel_${currentUser || 'default'}`;
-  const amountModeStorageKey = () => `ft_amountMode_${currentUser || 'default'}`;
+  const themeStorageKey            = () => `ft_theme_${currentUser || 'default'}`;
+  const homeLabelStorageKey        = () => `ft_homeLabel_${currentUser || 'default'}`;
+  const amountModeStorageKey       = () => `ft_amountMode_${currentUser || 'default'}`;
+  const paymentTrackerStorageKey   = () => `ft_paymentTracker_${currentUser || 'default'}`;
+  const fractionalRecurStorageKey  = () => `ft_fracRecurring_${currentUser || 'default'}`;
 
   function applyTheme(theme) {
     currentTheme = theme;
@@ -2640,10 +2742,26 @@
     activeCardSlugs.forEach(slug => renderCardAmount(slug));
   }
 
+  function setPaymentTrackerVisible(visible) {
+    showPaymentTracker = visible;
+    localStorage.setItem(paymentTrackerStorageKey(), visible ? '1' : '0');
+    document.querySelectorAll('.ct-payment-tracker').forEach(el => {
+      el.style.display = visible ? '' : 'none';
+    });
+  }
+
+  function setFractionalRecurring(enabled) {
+    fractionalRecurring = enabled;
+    localStorage.setItem(fractionalRecurStorageKey(), enabled ? '1' : '0');
+    renderRecurring();
+  }
+
   function loadUserSettings() {
-    currentTheme      = localStorage.getItem(themeStorageKey()) || 'midnight';
-    homeLabel         = localStorage.getItem(homeLabelStorageKey()) || 'Home';
-    amountDisplayMode = localStorage.getItem(amountModeStorageKey()) || 'expenses';
+    currentTheme        = localStorage.getItem(themeStorageKey()) || 'midnight';
+    homeLabel            = localStorage.getItem(homeLabelStorageKey()) || 'Home';
+    amountDisplayMode    = localStorage.getItem(amountModeStorageKey()) || 'expenses';
+    showPaymentTracker   = localStorage.getItem(paymentTrackerStorageKey()) !== '0';
+    fractionalRecurring  = localStorage.getItem(fractionalRecurStorageKey()) === '1';
     applyTheme(currentTheme);
     applyHomeLabel();
   }
@@ -2652,6 +2770,8 @@
     renderThemeGrid();
     renderAmountModeList();
     document.getElementById('settings-home-label').value = homeLabel;
+    document.getElementById('settings-payment-tracker-toggle').checked = showPaymentTracker;
+    document.getElementById('settings-fractional-recurring-toggle').checked = fractionalRecurring;
     applyHomeLabel();
     document.getElementById('settings-modal-overlay').classList.add('visible');
     document.body.style.overflow = 'hidden';
@@ -2671,6 +2791,12 @@
   document.getElementById('settings-add-card-btn').addEventListener('click', () => {
     closeSettingsModal();
     openAddCardModal();
+  });
+  document.getElementById('settings-payment-tracker-toggle').addEventListener('change', e => {
+    setPaymentTrackerVisible(e.target.checked);
+  });
+  document.getElementById('settings-fractional-recurring-toggle').addEventListener('change', e => {
+    setFractionalRecurring(e.target.checked);
   });
 
   // ── Card / payment method management ──
@@ -2902,15 +3028,13 @@
       });
       card.appendChild(homeToggleWrap);
 
+      const trackerWrap = document.createElement('div');
+      trackerWrap.className = 'ct-payment-tracker';
+      trackerWrap.style.display = showPaymentTracker ? '' : 'none';
+
       const wheel = document.createElement('div');
       wheel.className = 'payment-wheel';
       wheel.dataset.card = slug;
-      wheel.setAttribute('role', 'slider');
-      wheel.setAttribute('aria-label', `${meta.name} paid amount`);
-      wheel.setAttribute('aria-valuemin', '0');
-      wheel.setAttribute('aria-valuemax', '0');
-      wheel.setAttribute('aria-valuenow', '0');
-      wheel.tabIndex = 0;
       wheel.innerHTML = `
         <svg viewBox="0 0 120 120" aria-hidden="true">
           <circle class="wheel-track" cx="60" cy="60" r="48"></circle>
@@ -2922,7 +3046,7 @@
           <div class="wheel-paid-value" id="wheel-${slug}-paid">—</div>
           <div class="wheel-remaining" id="wheel-${slug}-left">— left</div>
         </div>`;
-      card.appendChild(wheel);
+      trackerWrap.appendChild(wheel);
 
       const inputWrap = document.createElement('label');
       inputWrap.className = 'payment-input-wrap';
@@ -2937,52 +3061,25 @@
       input.min            = '0';
       input.step            = '0.01';
       input.inputMode        = 'decimal';
-      input.placeholder       = 'Paid amount';
+      input.placeholder       = 'Add amount';
       inputWrap.appendChild(input);
-      card.appendChild(inputWrap);
+      trackerWrap.appendChild(inputWrap);
+
+      card.appendChild(trackerWrap);
 
       container.appendChild(card);
 
       card.addEventListener('click', () => openCardModal(slug));
-      wireCtCardWheel(slug, wheel);
       inputWrap.addEventListener('click', e => e.stopPropagation());
       input.addEventListener('click', e => e.stopPropagation());
-      input.addEventListener('input', e => setPayment(slug, e.target.value));
-      input.addEventListener('blur', () => renderPaymentWheel(slug));
+      input.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        commitPaymentAdd(slug, input);
+      });
+      input.addEventListener('blur', () => commitPaymentAdd(slug, input));
 
       renderPaymentWheel(slug);
-    });
-  }
-
-  function wireCtCardWheel(cardId, wheel) {
-    wheel.addEventListener('click', e => e.stopPropagation());
-    wheel.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      wheel.setPointerCapture(e.pointerId);
-      setPaymentFromPointer(cardId, e);
-    });
-    wheel.addEventListener('pointermove', e => {
-      if (!wheel.hasPointerCapture(e.pointerId)) return;
-      e.preventDefault();
-      setPaymentFromPointer(cardId, e);
-    });
-    wheel.addEventListener('keydown', e => {
-      const state = paymentState[cardId];
-      const step = Math.max(1, Math.round(state.owed / 100));
-      if (['ArrowRight', 'ArrowUp'].includes(e.key)) {
-        e.preventDefault();
-        setPayment(cardId, state.paid + step);
-      } else if (['ArrowLeft', 'ArrowDown'].includes(e.key)) {
-        e.preventDefault();
-        setPayment(cardId, state.paid - step);
-      } else if (e.key === 'Home') {
-        e.preventDefault();
-        setPayment(cardId, 0);
-      } else if (e.key === 'End') {
-        e.preventDefault();
-        setPayment(cardId, state.owed);
-      }
     });
   }
 
@@ -4243,8 +4340,11 @@
 
     container.innerHTML = '';
     recurringItems.forEach(item => {
+      const paid    = item.paid || 0;
+      const partial = fractionalRecurring && paid > 0 && !item.charged;
+
       const el = document.createElement('div');
-      el.className = 'recurring-item' + (item.charged ? ' charged' : '');
+      el.className = 'recurring-item' + (item.charged ? ' charged' : '') + (partial ? ' partial' : '');
       el.dataset.id = item.id;
 
       const dragHandle = document.createElement('button');
@@ -4262,13 +4362,25 @@
 
       const info = document.createElement('div');
       info.className = 'recurring-info';
+
+      const nameRow = document.createElement('div');
+      nameRow.className = 'recurring-name-row';
       const name = document.createElement('div');
       name.className   = 'recurring-name';
       name.textContent = item.name;
+      nameRow.appendChild(name);
+
+      if (fractionalRecurring && paid > 0) {
+        const balance = document.createElement('span');
+        balance.className = 'recurring-balance' + (item.charged ? ' full' : '');
+        balance.textContent = `${fmt(paid)} / ${fmt(item.amount)}`;
+        nameRow.appendChild(balance);
+      }
+      info.appendChild(nameRow);
+
       const meta = document.createElement('div');
       meta.className   = 'recurring-meta';
       meta.textContent = [item.category, item.cardType].filter(Boolean).join(' · ') || 'Fixed expense';
-      info.appendChild(name);
       info.appendChild(meta);
 
       const amount = document.createElement('div');
@@ -4278,17 +4390,69 @@
       const actions = document.createElement('div');
       actions.className = 'recurring-actions';
 
-      const switchLabel = document.createElement('label');
-      switchLabel.className = 'switch-label';
-      switchLabel.title     = 'Mark as charged this month';
-      const checkbox = document.createElement('input');
-      checkbox.type    = 'checkbox';
-      checkbox.checked = item.charged;
-      checkbox.addEventListener('change', () => toggleRecurringCharge(item.id, checkbox.checked));
-      const slider = document.createElement('span');
-      slider.className = 'switch-slider';
-      switchLabel.appendChild(checkbox);
-      switchLabel.appendChild(slider);
+      if (fractionalRecurring) {
+        const remaining  = Math.max(item.amount - paid, 0);
+        const quarterAmt = item.amount / 4;
+        const halfAmt    = item.amount / 2;
+
+        const fracGroup = document.createElement('div');
+        fracGroup.className = 'recurring-frac-group';
+
+        const quarterBtn = document.createElement('button');
+        quarterBtn.type      = 'button';
+        quarterBtn.className = 'btn-frac';
+        quarterBtn.textContent = '1/4';
+        quarterBtn.title     = `Add ${fmt(quarterAmt)} (1/4 of ${fmt(item.amount)})`;
+        quarterBtn.disabled  = remaining <= 0;
+        quarterBtn.addEventListener('click', e => { e.stopPropagation(); addFractionalPayment(item.id, quarterAmt); });
+
+        const halfBtn = document.createElement('button');
+        halfBtn.type      = 'button';
+        halfBtn.className = 'btn-frac';
+        halfBtn.textContent = '1/2';
+        halfBtn.title     = `Add ${fmt(halfAmt)} (1/2 of ${fmt(item.amount)})`;
+        halfBtn.disabled  = remaining <= 0;
+        halfBtn.addEventListener('click', e => { e.stopPropagation(); addFractionalPayment(item.id, halfAmt); });
+
+        const customInput = document.createElement('input');
+        customInput.type        = 'number';
+        customInput.className   = 'frac-input';
+        customInput.placeholder = 'Amount';
+        customInput.min         = '0';
+        customInput.step        = '0.01';
+        customInput.inputMode   = 'decimal';
+        customInput.disabled    = remaining <= 0;
+        customInput.addEventListener('click', e => e.stopPropagation());
+        const commitCustom = () => {
+          const val = moneyNumber(customInput.value);
+          customInput.value = '';
+          if (val > 0) addFractionalPayment(item.id, val);
+        };
+        customInput.addEventListener('keydown', e => {
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          commitCustom();
+        });
+        customInput.addEventListener('blur', commitCustom);
+
+        fracGroup.appendChild(quarterBtn);
+        fracGroup.appendChild(halfBtn);
+        fracGroup.appendChild(customInput);
+        actions.appendChild(fracGroup);
+      } else {
+        const switchLabel = document.createElement('label');
+        switchLabel.className = 'switch-label';
+        switchLabel.title     = 'Mark as charged this month';
+        const checkbox = document.createElement('input');
+        checkbox.type    = 'checkbox';
+        checkbox.checked = item.charged;
+        checkbox.addEventListener('change', () => toggleRecurringCharge(item.id, checkbox.checked));
+        const slider = document.createElement('span');
+        slider.className = 'switch-slider';
+        switchLabel.appendChild(checkbox);
+        switchLabel.appendChild(slider);
+        actions.appendChild(switchLabel);
+      }
 
       const editBtn = document.createElement('button');
       editBtn.type      = 'button';
@@ -4304,7 +4468,6 @@
       delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
       delBtn.addEventListener('click', () => openConfirmRecurring(item));
 
-      actions.appendChild(switchLabel);
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
 
@@ -4327,6 +4490,24 @@
       showToast(`Fixed expense not updated: ${err.message}`, true);
       if (item) item.charged = !charged;
       renderRecurring();
+    }
+  }
+
+  // Used by the optional fractional-payments mode: adds `amount` on top of
+  // whatever's already been added to this fixed expense for the current month.
+  async function addFractionalPayment(id, amount) {
+    try {
+      const data = await fetch(buildUrl({ action: 'addRecurringPayment', id, month: viewMonth, year: viewYear, amount })).then(r => r.json());
+      if (!data.success) throw new Error(data.error || 'Payment not added');
+      const item = recurringItems.find(r => r.id === id);
+      if (item) {
+        item.paid    = data.paid;
+        item.charged = data.amount > 0 && data.paid >= data.amount;
+      }
+      renderRecurring();
+      loadData();
+    } catch (err) {
+      showToast(`Fixed expense not updated: ${err.message}`, true);
     }
   }
 
