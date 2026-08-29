@@ -237,6 +237,32 @@
       display: flex;
       gap: 8px;
     }
+    .header-actions-top {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    /* ── Transfer Between Accounts button ── */
+    .btn-transfer-action {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--blue);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      padding: 10px 18px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: opacity 0.2s, box-shadow 0.2s, transform 0.1s;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+    }
+    .btn-transfer-action:hover  { opacity: 0.88; }
+    .btn-transfer-action:active { transform: scale(0.97); opacity: 1; }
     .btn-settings {
       width: 26px; height: 26px;
       border-radius: 50%;
@@ -1717,6 +1743,30 @@
     }
 
     /* ── Monthly Fixed Expenses Styles ── */
+    .recurring-filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .recurring-filter-select {
+      flex: 1;
+      min-width: 120px;
+      background: var(--bg);
+      border: 1.5px solid var(--border-2);
+      border-radius: 9px;
+      color: var(--text-2);
+      padding: 7px 10px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .recurring-filter-select:hover,
+    .recurring-filter-select:focus { border-color: var(--gold); color: var(--text); }
+    .recurring-filter-select option { background: #090b17; }
     .recurring-list {
       display: flex;
       flex-direction: column;
@@ -1825,6 +1875,8 @@
     .recurring-actions {
       display: flex;
       align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
       gap: 6px;
     }
     .btn-rec-action {
@@ -2081,16 +2133,19 @@
       </div>
     </div>
     <div class="header-actions">
-      <button class="btn-add" id="btn-toggle-form">
-        <span class="add-icon">+</span>
-        Add Entry
-      </button>
+      <div class="header-actions-top">
+        <button type="button" class="btn-transfer-action" id="btn-transfer" title="Transfer Between Accounts">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 21l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          Transfer
+        </button>
+        <button class="btn-add" id="btn-toggle-form">
+          <span class="add-icon">+</span>
+          Add Entry
+        </button>
+      </div>
       <div class="header-actions-row">
         <button type="button" class="btn-settings" id="btn-calculator" title="Calculator" aria-label="Calculator">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><circle cx="8" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="19" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/></svg>
-        </button>
-        <button type="button" class="btn-settings" id="btn-transfer" title="Transfer Between Accounts" aria-label="Transfer Between Accounts">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 21l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
         </button>
         <button type="button" class="btn-settings" id="btn-settings" title="Settings" aria-label="Settings">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -2150,6 +2205,14 @@
 
   <!-- Monthly Fixed Expenses -->
   <div class="section-label">Monthly Fixed Expenses</div>
+  <div class="recurring-filter-row">
+    <select class="recurring-filter-select" id="rec-filter-category">
+      <option value="">All Categories</option>
+    </select>
+    <select class="recurring-filter-select" id="rec-filter-card">
+      <option value="">All Cards</option>
+    </select>
+  </div>
   <div class="recurring-list" id="recurring-list">
     <div class="tx-empty" style="padding: 20px 0;"><span class="spinner"></span> Loading…</div>
   </div>
@@ -4145,7 +4208,7 @@
           data.typeTotals = { essential: 0, unnecessary: 0, home: data.homeTotal || 0 };
           
           (txData.transactions || []).forEach(t => {
-            if (t.source === 'expenses' && t.category !== 'Transfer') {
+            if (t.source === 'expenses' && t.category !== 'Transfer' && t.category !== 'Payment') {
               const isIncome = (t.expType || '').toLowerCase() === 'income';
               if (!isIncome) {
                 const cat = t.category || 'Other';
@@ -4526,7 +4589,7 @@
       allTransactions = txns;
 
       const total = allTransactions
-        .filter(t => (t.expType || '').toLowerCase() !== 'income' && t.category !== 'Transfer')
+        .filter(t => (t.expType || '').toLowerCase() !== 'income' && t.category !== 'Transfer' && t.category !== 'Payment')
         .reduce((s, t) => s + t.amount, 0);
       document.getElementById('card-modal-total').textContent =
         `${fmt(total)} spent · ${MONTHS[viewMonth - 1]} ${viewYear}`;
@@ -5067,6 +5130,8 @@
   // ── Monthly Fixed Expenses ──
   let recurringItems     = [];
   let editingRecurringId = null;
+  let recFilterCategory  = '';
+  let recFilterCard      = '';
 
   const recurringOrderStorageKey = () => `ft_recurringOrder_${currentUser || 'default'}`;
 
@@ -5163,21 +5228,65 @@
       const data = await fetch(url).then(r => r.json());
       recurringItems = data.recurring || [];
       applySavedRecurringOrder();
+      populateRecurringFilters();
       renderRecurring();
     } catch {
       container.innerHTML = '<div class="tx-empty">Error loading fixed expenses</div>';
     }
   }
 
+  // Keeps the category/card filter dropdowns in sync with whatever fixed
+  // expenses actually exist, so a filter never offers a choice with nothing behind it.
+  function populateRecurringFilters() {
+    const catSel  = document.getElementById('rec-filter-category');
+    const cardSel = document.getElementById('rec-filter-card');
+    const categories = Array.from(new Set(recurringItems.map(i => i.category).filter(Boolean))).sort();
+    const cards       = Array.from(new Set(recurringItems.map(i => i.cardType).filter(Boolean))).sort();
+
+    [[catSel, categories, 'All Categories'], [cardSel, cards, 'All Cards']].forEach(([sel, values, allLabel]) => {
+      const current = sel.value;
+      sel.innerHTML = `<option value="">${allLabel}</option>`;
+      values.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        sel.appendChild(opt);
+      });
+      if (current && values.includes(current)) sel.value = current;
+      else sel.value = '';
+    });
+
+    recFilterCategory = catSel.value;
+    recFilterCard     = cardSel.value;
+  }
+
+  document.getElementById('rec-filter-category').addEventListener('change', e => {
+    recFilterCategory = e.target.value;
+    renderRecurring();
+  });
+  document.getElementById('rec-filter-card').addEventListener('change', e => {
+    recFilterCard = e.target.value;
+    renderRecurring();
+  });
+
   function renderRecurring() {
     const container = document.getElementById('recurring-list');
+    const items = recurringItems.filter(item =>
+      (!recFilterCategory || item.category === recFilterCategory) &&
+      (!recFilterCard || item.cardType === recFilterCard)
+    );
+
     if (!recurringItems.length) {
       container.innerHTML = '<div class="tx-empty" style="padding: 20px 0;">No fixed expenses yet. Add one below.</div>';
       return;
     }
+    if (!items.length) {
+      container.innerHTML = '<div class="tx-empty" style="padding: 20px 0;">No fixed expenses match this filter.</div>';
+      return;
+    }
 
     container.innerHTML = '';
-    recurringItems.forEach(item => {
+    items.forEach(item => {
       const paid    = item.paid || 0;
       const partial = fractionalRecurring && paid > 0 && !item.charged;
 
@@ -5208,10 +5317,13 @@
       name.textContent = item.name;
       nameRow.appendChild(name);
 
-      if (fractionalRecurring && paid > 0) {
+      if (fractionalRecurring) {
+        // Shows what's still owed this month, not a running paid/total —
+        // stays visible (as $0) once fully paid instead of disappearing.
+        const owed = Math.max(item.amount - paid, 0);
         const balance = document.createElement('span');
-        balance.className = 'recurring-balance' + (item.charged ? ' full' : '');
-        balance.textContent = `${fmt(paid)} / ${fmt(item.amount)}`;
+        balance.className = 'recurring-balance' + (owed <= 0 ? ' full' : '');
+        balance.textContent = owed > 0 ? `-${fmt(owed)}` : fmt(0);
         nameRow.appendChild(balance);
       }
       info.appendChild(nameRow);
@@ -5253,20 +5365,23 @@
         customInput.addEventListener('blur', commitCustom);
 
         actions.appendChild(customInput);
-      } else {
-        const switchLabel = document.createElement('label');
-        switchLabel.className = 'switch-label';
-        switchLabel.title     = 'Mark as charged this month';
-        const checkbox = document.createElement('input');
-        checkbox.type    = 'checkbox';
-        checkbox.checked = item.charged;
-        checkbox.addEventListener('change', () => toggleRecurringCharge(item.id, checkbox.checked));
-        const slider = document.createElement('span');
-        slider.className = 'switch-slider';
-        switchLabel.appendChild(checkbox);
-        switchLabel.appendChild(slider);
-        actions.appendChild(switchLabel);
       }
+
+      // The on/off toggle is always available — even in custom-amount mode —
+      // as a one-click way to mark the full amount charged/uncharged without
+      // typing the exact remaining balance into the custom input.
+      const switchLabel = document.createElement('label');
+      switchLabel.className = 'switch-label';
+      switchLabel.title     = 'Mark as charged this month';
+      const checkbox = document.createElement('input');
+      checkbox.type    = 'checkbox';
+      checkbox.checked = item.charged;
+      checkbox.addEventListener('change', () => toggleRecurringCharge(item.id, checkbox.checked));
+      const slider = document.createElement('span');
+      slider.className = 'switch-slider';
+      switchLabel.appendChild(checkbox);
+      switchLabel.appendChild(slider);
+      actions.appendChild(switchLabel);
 
       const editBtn = document.createElement('button');
       editBtn.type      = 'button';
@@ -5294,7 +5409,14 @@
 
   async function toggleRecurringCharge(id, charged) {
     const item = recurringItems.find(r => r.id === id);
-    if (item) item.charged = charged;
+    const prevPaid = item ? item.paid : 0;
+    // Mirrors what toggleRecurring sets server-side, so the custom-amount
+    // balance badge (driven by item.paid) reflects "fully paid"/"nothing
+    // paid" immediately instead of showing a stale partial amount.
+    if (item) {
+      item.charged = charged;
+      item.paid    = charged ? item.amount : 0;
+    }
     renderRecurring();
     try {
       const data = await fetch(buildUrl({ action: 'toggleRecurring', id, month: viewMonth, year: viewYear, charged })).then(r => r.json());
@@ -5302,7 +5424,7 @@
       loadData();
     } catch (err) {
       showToast(`Fixed expense not updated: ${err.message}`, true);
-      if (item) item.charged = !charged;
+      if (item) { item.charged = !charged; item.paid = prevPaid; }
       renderRecurring();
     }
   }
