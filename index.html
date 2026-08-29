@@ -2089,6 +2089,9 @@
         <button type="button" class="btn-settings" id="btn-calculator" title="Calculator" aria-label="Calculator">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><circle cx="8" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="19" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/></svg>
         </button>
+        <button type="button" class="btn-settings" id="btn-transfer" title="Transfer Between Accounts" aria-label="Transfer Between Accounts">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 21l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        </button>
         <button type="button" class="btn-settings" id="btn-settings" title="Settings" aria-label="Settings">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
@@ -2521,6 +2524,51 @@
   </div>
 </div>
 
+<!-- Transfer between debit accounts modal -->
+<div class="modal-overlay" id="transfer-modal-overlay" role="dialog" aria-modal="true" aria-label="Transfer Between Accounts">
+  <div class="modal-card" id="transfer-modal-card" style="max-width: 380px;">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="modal-title">Transfer Between Accounts</div>
+      <button class="modal-close" id="transfer-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="settings-hint" id="transfer-hint" style="margin-bottom: 14px;">Moves money between two debit accounts and logs a matching entry on each.</div>
+
+    <form id="transfer-form" novalidate>
+      <div class="form-grid">
+        <div class="form-group col-span">
+          <label for="tf-from">From</label>
+          <select id="tf-from" required>
+            <option value="">Select…</option>
+          </select>
+        </div>
+
+        <div class="form-group col-span">
+          <label for="tf-to">To</label>
+          <select id="tf-to" required>
+            <option value="">Select…</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="amount-section">
+        <label class="field-label" for="tf-amount">Amount</label>
+        <div class="amount-wrap">
+          <span class="amount-sign">$</span>
+          <input id="tf-amount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" id="tf-cancel">Cancel</button>
+        <button type="submit" class="btn-save" id="tf-submit">Transfer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Settings modal -->
 <div class="modal-overlay" id="settings-modal-overlay" role="dialog" aria-modal="true" aria-label="Settings">
   <div class="modal-card" id="settings-modal-card" style="max-width: 480px;">
@@ -2946,6 +2994,79 @@
   document.getElementById('pay-source-cancel').addEventListener('click', closePaySourceModal);
   document.getElementById('pay-source-modal-overlay').addEventListener('click', e => {
     if (e.target === document.getElementById('pay-source-modal-overlay')) closePaySourceModal();
+  });
+
+  // ── Transfers between two debit accounts: logs "Transfer to X" on the
+  // source account and "Transfer from Y" on the destination in one call ──
+  function populateTransferSelects() {
+    const debitSlugs = activeCardSlugs.filter(slug => cardMeta[slug].type === 'debit');
+    [document.getElementById('tf-from'), document.getElementById('tf-to')].forEach(sel => {
+      const current = sel.value;
+      sel.innerHTML = '<option value="">Select…</option>';
+      debitSlugs.forEach(slug => {
+        const opt = document.createElement('option');
+        opt.value = cardMeta[slug].name;
+        opt.textContent = cardMeta[slug].name;
+        sel.appendChild(opt);
+      });
+      if (current && debitSlugs.some(slug => cardMeta[slug].name === current)) sel.value = current;
+    });
+  }
+
+  function openTransferModal() {
+    const debitSlugs = activeCardSlugs.filter(slug => cardMeta[slug].type === 'debit');
+    if (debitSlugs.length < 2) {
+      showToast('Add at least two debit accounts to transfer between', true);
+      return;
+    }
+    populateTransferSelects();
+    document.getElementById('transfer-form').reset();
+    document.getElementById('transfer-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeTransferModal() {
+    document.getElementById('transfer-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('btn-transfer').addEventListener('click', openTransferModal);
+  document.getElementById('transfer-modal-close').addEventListener('click', closeTransferModal);
+  document.getElementById('tf-cancel').addEventListener('click', closeTransferModal);
+  document.getElementById('transfer-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('transfer-modal-overlay')) closeTransferModal();
+  });
+
+  document.getElementById('transfer-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fromName = document.getElementById('tf-from').value;
+    const toName   = document.getElementById('tf-to').value;
+    const amount   = moneyNumber(document.getElementById('tf-amount').value);
+
+    if (!fromName || !toName) { showToast('Choose both accounts', true); return; }
+    if (fromName === toName)  { showToast('Choose two different accounts', true); return; }
+    if (!(amount > 0))        { showToast('Enter an amount greater than 0', true); return; }
+
+    const submitBtn = document.getElementById('tf-submit');
+    submitBtn.disabled = true;
+    try {
+      const data = await fetch(buildUrl({
+        action:       'transferBetweenDebitCards',
+        fromCardType: fromName,
+        toCardType:   toName,
+        amount:       amount.toFixed(2),
+        month:        viewMonth,
+        year:         viewYear,
+      })).then(r => r.json());
+      if (!data.success) throw new Error(data.error || 'Transfer failed');
+      closeTransferModal();
+      showToast(`Transferred ${fmt(amount)} from ${fromName} to ${toName}`);
+      loadData();
+    } catch (err) {
+      showToast(`Transfer failed: ${err.message}`, true);
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 
   function updatePaymentOwed(cardId, owed, paid) {
