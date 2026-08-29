@@ -1840,31 +1840,9 @@
       color: var(--gold);
     }
 
-    /* ── Fractional fixed-expense payment controls ── */
-    .recurring-frac-group {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-    .btn-frac {
-      background: var(--bg);
-      border: 1.5px solid var(--border-2);
-      border-radius: 7px;
-      color: var(--text-2);
-      font-size: 0.66rem;
-      font-weight: 700;
-      font-family: inherit;
-      width: 30px; height: 26px;
-      padding: 0;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
-    }
-    .btn-frac:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
-    .btn-frac:disabled { opacity: 0.4; cursor: not-allowed; }
+    /* ── Custom-amount fixed-expense payment control ── */
     .frac-input {
-      width: 54px; height: 26px;
+      width: 90px; height: 26px;
       background: var(--bg);
       border: 1.5px solid var(--border-2);
       border-radius: 7px;
@@ -1875,22 +1853,11 @@
       text-align: center;
       outline: none;
       padding: 0 4px;
+      flex-shrink: 0;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
     .frac-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-ring); }
     .frac-input::placeholder { color: var(--text-3); }
-    .frac-input:disabled { opacity: 0.4; cursor: not-allowed; }
-    .recurring-paid-label {
-      font-size: 0.72rem;
-      font-weight: 800;
-      color: var(--green);
-      letter-spacing: 0.1em;
-      padding: 0 8px;
-      height: 26px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
 
     /* ── Settings modal toggle rows ── */
     .settings-toggle-row {
@@ -2503,21 +2470,29 @@
       </button>
     </div>
 
-    <div class="settings-section settings-toggle-row">
-      <div>
-        <label class="field-label">Card Payment Tracker</label>
-        <div class="settings-hint">Shows the paid-vs-owed wheel and an add-amount box on each card. Turn off for more compact cards.</div>
+    <div class="settings-section">
+      <label class="field-label">Card Payment Tracker</label>
+      <div class="settings-hint" style="margin-bottom: 10px;">Shows the paid-vs-owed wheel and an add-amount box. Turn it off entirely, or just for debit accounts (where "amount owed" doesn't really apply).</div>
+      <div class="settings-toggle-row" style="margin-bottom: 8px;">
+        <label class="field-label" style="margin-bottom: 0;">Credit Cards</label>
+        <label class="switch-label mini">
+          <input type="checkbox" id="settings-payment-tracker-credit-toggle" checked>
+          <span class="switch-slider"></span>
+        </label>
       </div>
-      <label class="switch-label mini">
-        <input type="checkbox" id="settings-payment-tracker-toggle" checked>
-        <span class="switch-slider"></span>
-      </label>
+      <div class="settings-toggle-row">
+        <label class="field-label" style="margin-bottom: 0;">Debit Accounts</label>
+        <label class="switch-label mini">
+          <input type="checkbox" id="settings-payment-tracker-debit-toggle" checked>
+          <span class="switch-slider"></span>
+        </label>
+      </div>
     </div>
 
     <div class="settings-section settings-toggle-row">
       <div>
-        <label class="field-label">Fractional Fixed-Expense Payments</label>
-        <div class="settings-hint">Adds 1/4, 1/2, and custom-amount buttons to each fixed expense instead of a simple on/off switch.</div>
+        <label class="field-label">Custom-Amount Fixed-Expense Payments</label>
+        <div class="settings-hint">Adds an amount box to each fixed expense (instead of a simple on/off switch) so you can charge it in parts — type a negative number to correct the balance back down.</div>
       </div>
       <label class="switch-label mini">
         <input type="checkbox" id="settings-fractional-recurring-toggle">
@@ -2919,19 +2894,21 @@
     { id: 'net',      name: 'Expenses + Income (Net)', desc: 'One combined number: green with a + when income covers expenses, otherwise what you still owe.' },
     { id: 'split',    name: 'Expenses & Income (Split)', desc: 'Expense on top as usual, income below it in smaller green text.' },
   ];
-  let currentTheme         = 'midnight';
-  let homeLabel            = 'Home';
-  let amountDisplayMode    = 'expenses';
-  let showPaymentTracker   = true;
-  let fractionalRecurring  = false;
-  let showHomeToggle       = true;
+  let currentTheme               = 'midnight';
+  let homeLabel                  = 'Home';
+  let amountDisplayMode          = 'expenses';
+  let showPaymentTrackerCredit   = true;
+  let showPaymentTrackerDebit    = true;
+  let fractionalRecurring        = false;
+  let showHomeToggle             = true;
 
-  const themeStorageKey            = () => `ft_theme_${currentUser || 'default'}`;
-  const homeLabelStorageKey        = () => `ft_homeLabel_${currentUser || 'default'}`;
-  const amountModeStorageKey       = () => `ft_amountMode_${currentUser || 'default'}`;
-  const paymentTrackerStorageKey   = () => `ft_paymentTracker_${currentUser || 'default'}`;
-  const fractionalRecurStorageKey  = () => `ft_fracRecurring_${currentUser || 'default'}`;
-  const homeToggleStorageKey       = () => `ft_homeToggleVisible_${currentUser || 'default'}`;
+  const themeStorageKey                 = () => `ft_theme_${currentUser || 'default'}`;
+  const homeLabelStorageKey             = () => `ft_homeLabel_${currentUser || 'default'}`;
+  const amountModeStorageKey            = () => `ft_amountMode_${currentUser || 'default'}`;
+  const paymentTrackerCreditStorageKey  = () => `ft_paymentTrackerCredit_${currentUser || 'default'}`;
+  const paymentTrackerDebitStorageKey   = () => `ft_paymentTrackerDebit_${currentUser || 'default'}`;
+  const fractionalRecurStorageKey       = () => `ft_fracRecurring_${currentUser || 'default'}`;
+  const homeToggleStorageKey            = () => `ft_homeToggleVisible_${currentUser || 'default'}`;
 
   function applyTheme(theme) {
     currentTheme = theme;
@@ -3009,12 +2986,23 @@
     activeCardSlugs.forEach(slug => renderCardAmount(slug));
   }
 
-  function setPaymentTrackerVisible(visible) {
-    showPaymentTracker = visible;
-    localStorage.setItem(paymentTrackerStorageKey(), visible ? '1' : '0');
+  function applyPaymentTrackerVisibility() {
     document.querySelectorAll('.ct-payment-tracker').forEach(el => {
+      const visible = el.dataset.accountType === 'debit' ? showPaymentTrackerDebit : showPaymentTrackerCredit;
       el.style.display = visible ? '' : 'none';
     });
+  }
+
+  function setPaymentTrackerCredit(visible) {
+    showPaymentTrackerCredit = visible;
+    localStorage.setItem(paymentTrackerCreditStorageKey(), visible ? '1' : '0');
+    applyPaymentTrackerVisibility();
+  }
+
+  function setPaymentTrackerDebit(visible) {
+    showPaymentTrackerDebit = visible;
+    localStorage.setItem(paymentTrackerDebitStorageKey(), visible ? '1' : '0');
+    applyPaymentTrackerVisibility();
   }
 
   function setFractionalRecurring(enabled) {
@@ -3032,12 +3020,13 @@
   }
 
   function loadUserSettings() {
-    currentTheme        = localStorage.getItem(themeStorageKey()) || 'midnight';
-    homeLabel            = localStorage.getItem(homeLabelStorageKey()) || 'Home';
-    amountDisplayMode    = localStorage.getItem(amountModeStorageKey()) || 'expenses';
-    showPaymentTracker   = localStorage.getItem(paymentTrackerStorageKey()) !== '0';
-    fractionalRecurring  = localStorage.getItem(fractionalRecurStorageKey()) === '1';
-    showHomeToggle       = localStorage.getItem(homeToggleStorageKey()) !== '0';
+    currentTheme              = localStorage.getItem(themeStorageKey()) || 'midnight';
+    homeLabel                 = localStorage.getItem(homeLabelStorageKey()) || 'Home';
+    amountDisplayMode         = localStorage.getItem(amountModeStorageKey()) || 'expenses';
+    showPaymentTrackerCredit  = localStorage.getItem(paymentTrackerCreditStorageKey()) !== '0';
+    showPaymentTrackerDebit   = localStorage.getItem(paymentTrackerDebitStorageKey()) !== '0';
+    fractionalRecurring       = localStorage.getItem(fractionalRecurStorageKey()) === '1';
+    showHomeToggle            = localStorage.getItem(homeToggleStorageKey()) !== '0';
     applyTheme(currentTheme);
     applyHomeLabel();
   }
@@ -3094,7 +3083,8 @@
     renderAmountModeList();
     renderAccountTypeList();
     document.getElementById('settings-home-label').value = homeLabel;
-    document.getElementById('settings-payment-tracker-toggle').checked = showPaymentTracker;
+    document.getElementById('settings-payment-tracker-credit-toggle').checked = showPaymentTrackerCredit;
+    document.getElementById('settings-payment-tracker-debit-toggle').checked = showPaymentTrackerDebit;
     document.getElementById('settings-fractional-recurring-toggle').checked = fractionalRecurring;
     document.getElementById('settings-home-toggle-toggle').checked = showHomeToggle;
     applyHomeLabel();
@@ -3117,8 +3107,11 @@
     closeSettingsModal();
     openAddCardModal();
   });
-  document.getElementById('settings-payment-tracker-toggle').addEventListener('change', e => {
-    setPaymentTrackerVisible(e.target.checked);
+  document.getElementById('settings-payment-tracker-credit-toggle').addEventListener('change', e => {
+    setPaymentTrackerCredit(e.target.checked);
+  });
+  document.getElementById('settings-payment-tracker-debit-toggle').addEventListener('change', e => {
+    setPaymentTrackerDebit(e.target.checked);
   });
   document.getElementById('settings-fractional-recurring-toggle').addEventListener('change', e => {
     setFractionalRecurring(e.target.checked);
@@ -3478,7 +3471,8 @@
 
       const trackerWrap = document.createElement('div');
       trackerWrap.className = 'ct-payment-tracker';
-      trackerWrap.style.display = showPaymentTracker ? '' : 'none';
+      trackerWrap.dataset.accountType = meta.type;
+      trackerWrap.style.display = (meta.type === 'debit' ? showPaymentTrackerDebit : showPaymentTrackerCredit) ? '' : 'none';
 
       const wheel = document.createElement('div');
       wheel.className = 'payment-wheel';
@@ -4862,48 +4856,22 @@
       const actions = document.createElement('div');
       actions.className = 'recurring-actions';
 
-      if (fractionalRecurring && item.charged) {
-        const paidLabel = document.createElement('div');
-        paidLabel.className = 'recurring-paid-label';
-        paidLabel.textContent = 'PAID';
-        actions.appendChild(paidLabel);
-      } else if (fractionalRecurring) {
-        const remaining  = Math.max(item.amount - paid, 0);
-        const quarterAmt = item.amount / 4;
-        const halfAmt    = item.amount / 2;
-
-        const fracGroup = document.createElement('div');
-        fracGroup.className = 'recurring-frac-group';
-
-        const quarterBtn = document.createElement('button');
-        quarterBtn.type      = 'button';
-        quarterBtn.className = 'btn-frac';
-        quarterBtn.textContent = '1/4';
-        quarterBtn.title     = `Add ${fmt(quarterAmt)} (1/4 of ${fmt(item.amount)})`;
-        quarterBtn.disabled  = remaining <= 0;
-        quarterBtn.addEventListener('click', e => { e.stopPropagation(); addFractionalPayment(item.id, quarterAmt); });
-
-        const halfBtn = document.createElement('button');
-        halfBtn.type      = 'button';
-        halfBtn.className = 'btn-frac';
-        halfBtn.textContent = '1/2';
-        halfBtn.title     = `Add ${fmt(halfAmt)} (1/2 of ${fmt(item.amount)})`;
-        halfBtn.disabled  = remaining <= 0;
-        halfBtn.addEventListener('click', e => { e.stopPropagation(); addFractionalPayment(item.id, halfAmt); });
+      if (fractionalRecurring) {
+        const remaining = Math.max(item.amount - paid, 0);
 
         const customInput = document.createElement('input');
         customInput.type        = 'number';
         customInput.className   = 'frac-input';
-        customInput.placeholder = 'Amount';
-        customInput.min         = '0';
+        customInput.placeholder = 'Add or -reduce';
+        customInput.min         = (-paid).toFixed(2);
+        customInput.max         = remaining.toFixed(2);
         customInput.step        = '0.01';
         customInput.inputMode   = 'decimal';
-        customInput.disabled    = remaining <= 0;
         customInput.addEventListener('click', e => e.stopPropagation());
         const commitCustom = () => {
           const val = moneyNumber(customInput.value);
           customInput.value = '';
-          if (val > 0) addFractionalPayment(item.id, val);
+          if (val) addFractionalPayment(item.id, val);
         };
         customInput.addEventListener('keydown', e => {
           if (e.key !== 'Enter') return;
@@ -4912,10 +4880,7 @@
         });
         customInput.addEventListener('blur', commitCustom);
 
-        fracGroup.appendChild(quarterBtn);
-        fracGroup.appendChild(halfBtn);
-        fracGroup.appendChild(customInput);
-        actions.appendChild(fracGroup);
+        actions.appendChild(customInput);
       } else {
         const switchLabel = document.createElement('label');
         switchLabel.className = 'switch-label';
