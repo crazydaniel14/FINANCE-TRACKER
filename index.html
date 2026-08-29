@@ -2914,6 +2914,10 @@
     pendingCreditPayment = null;
   }
 
+  // Logs the debit-side expense and bumps the credit card's paid total in
+  // one atomic backend call, which also links the two — so if this "Payment
+  // to X" transaction is later edited or deleted from the transaction list,
+  // the credit card's payment wheel adjusts to match automatically.
   async function confirmPaySource(debitSlug) {
     if (!pendingCreditPayment) return;
     const { cardId, delta } = pendingCreditPayment;
@@ -2921,25 +2925,20 @@
     const debitMeta  = cardMeta[debitSlug];
     closePaySourceModal();
 
-    setPayment(cardId, paymentState[cardId].paid + delta);
-
-    const todayIso = new Date().toISOString().slice(0, 10);
     try {
       const data = await fetch(buildUrl({
-        action:   'append',
-        table:    'expenses',
-        name:     `Payment to ${creditMeta.name}`,
-        date:     todayIso,
-        amount:   delta.toFixed(2),
-        cardType: debitMeta.name,
-        category: 'Payment',
-        expType:  'Essential',
+        action:         'payCreditFromDebit',
+        creditCardType: creditMeta.name,
+        debitCardType:  debitMeta.name,
+        amount:         delta.toFixed(2),
+        month:          viewMonth,
+        year:           viewYear,
       })).then(r => r.json());
-      if (!data.success) throw new Error(data.error || 'Could not log the debit transaction');
+      if (!data.success) throw new Error(data.error || 'Could not log the payment');
       showToast(`Logged ${fmt(delta)} from ${debitMeta.name}`);
       loadData();
     } catch (err) {
-      showToast(`Payment saved, but the debit entry failed: ${err.message}`, true);
+      showToast(`Payment failed: ${err.message}`, true);
     }
   }
 
