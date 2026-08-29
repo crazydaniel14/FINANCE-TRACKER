@@ -233,6 +233,10 @@
       align-items: flex-end;
       gap: 8px;
     }
+    .header-actions-row {
+      display: flex;
+      gap: 8px;
+    }
     .btn-settings {
       width: 26px; height: 26px;
       border-radius: 50%;
@@ -326,10 +330,10 @@
     .month-nav button:disabled { opacity: 0.25; cursor: default; }
 
     #month-label {
-      font-size: 1.05rem;
-      font-weight: 600;
+      font-size: 1.4rem;
+      font-weight: 700;
       color: var(--text);
-      min-width: 140px;
+      min-width: 170px;
       text-align: center;
       letter-spacing: 0.01em;
     }
@@ -1813,6 +1817,17 @@
     .frac-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-ring); }
     .frac-input::placeholder { color: var(--text-3); }
     .frac-input:disabled { opacity: 0.4; cursor: not-allowed; }
+    .recurring-paid-label {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--green);
+      letter-spacing: 0.1em;
+      padding: 0 8px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
     /* ── Settings modal toggle rows ── */
     .settings-toggle-row {
@@ -1832,6 +1847,83 @@
       gap: 10px;
       width: 100%;
     }
+
+    /* ── Calculator ── */
+    .calc-display {
+      background: var(--bg);
+      border: 1.5px solid var(--border-2);
+      border-radius: 14px;
+      padding: 18px 16px;
+      margin-bottom: 14px;
+      text-align: right;
+      overflow-x: auto;
+    }
+    .calc-expression {
+      font-size: 0.82rem;
+      color: var(--text-2);
+      min-height: 1.2em;
+      font-variant-numeric: tabular-nums;
+      word-break: break-all;
+    }
+    .calc-result {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      margin-top: 4px;
+      white-space: nowrap;
+    }
+    .calc-result.error { color: var(--red); font-size: 1.3rem; }
+
+    .calc-use-entry { margin-bottom: 14px; }
+    .calc-use-entry-btn {
+      width: 100%;
+      background: var(--gold-dim);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 10px;
+      color: var(--gold);
+      padding: 9px 12px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .calc-use-entry-btn:hover { background: rgba(201,168,76,0.16); border-color: var(--gold); }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .calc-btn {
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 600;
+      padding: 14px 0;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .calc-btn:hover { background: var(--surface-2); }
+    .calc-btn:active { transform: scale(0.95); }
+    .calc-btn.calc-fn { color: var(--text-2); font-size: 0.92rem; }
+    .calc-btn.calc-op {
+      background: var(--gold-dim);
+      border-color: rgba(201,168,76,0.2);
+      color: var(--gold);
+    }
+    .calc-btn.calc-op:hover { background: rgba(201,168,76,0.16); }
+    .calc-btn.calc-eq {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-h) 100%);
+      color: #07090f;
+      border: none;
+    }
+    .calc-btn.calc-eq:hover { opacity: 0.9; }
 
     /* Custom premium toggle switch */
     .switch-label {
@@ -1931,9 +2023,14 @@
         <span class="add-icon">+</span>
         Add Entry
       </button>
-      <button type="button" class="btn-settings" id="btn-settings" title="Settings" aria-label="Settings">
-        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </button>
+      <div class="header-actions-row">
+        <button type="button" class="btn-settings" id="btn-calculator" title="Calculator" aria-label="Calculator">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><circle cx="8" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="19" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button type="button" class="btn-settings" id="btn-settings" title="Settings" aria-label="Settings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -2060,7 +2157,7 @@
         <label class="field-label" for="f-amount">Amount</label>
         <div class="amount-wrap">
           <span class="amount-sign">$</span>
-          <input id="f-amount" type="number" min="0" step="0.01" placeholder="0.00" required>
+          <input id="f-amount" type="text" placeholder="0.00 (or 350+50)" autocomplete="off" required>
         </div>
       </div>
 
@@ -2356,10 +2453,69 @@
       </label>
     </div>
 
+    <div class="settings-section settings-toggle-row">
+      <div>
+        <label class="field-label">Card Home-Expense Toggle</label>
+        <div class="settings-hint">Shows the "Include Home Expenses" switch on each card. Turn off if you don't split Home Expenses by card.</div>
+      </div>
+      <label class="switch-label mini">
+        <input type="checkbox" id="settings-home-toggle-toggle" checked>
+        <span class="switch-slider"></span>
+      </label>
+    </div>
+
     <div class="settings-section">
       <label class="field-label" for="settings-home-label">Home Summary Card Name</label>
       <input type="text" id="settings-home-label" placeholder="Home" maxlength="24">
       <div class="settings-hint">Used across the app, e.g. "<span class="settings-home-preview">Home</span> Transactions" and "<span class="settings-home-preview">Home</span> Expenses".</div>
+    </div>
+  </div>
+</div>
+
+<!-- Calculator modal -->
+<div class="modal-overlay" id="calc-modal-overlay" role="dialog" aria-modal="true" aria-label="Calculator">
+  <div class="modal-card" id="calc-modal-card" style="max-width: 340px;">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="modal-title">Calculator</div>
+      <button class="modal-close" id="calc-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="calc-display">
+      <div class="calc-expression" id="calc-expression">&nbsp;</div>
+      <div class="calc-result" id="calc-result">0</div>
+    </div>
+
+    <div class="calc-use-entry" id="calc-use-entry" style="display: none;">
+      <button type="button" class="calc-use-entry-btn" id="calc-use-entry-btn">Use <span id="calc-use-entry-amount"></span> as new entry</button>
+    </div>
+
+    <div class="calc-grid">
+      <button type="button" class="calc-btn calc-fn" data-calc="(">(</button>
+      <button type="button" class="calc-btn calc-fn" data-calc=")">)</button>
+      <button type="button" class="calc-btn calc-fn" data-calc="clear">C</button>
+      <button type="button" class="calc-btn calc-fn" data-calc="backspace">⌫</button>
+
+      <button type="button" class="calc-btn" data-calc="7">7</button>
+      <button type="button" class="calc-btn" data-calc="8">8</button>
+      <button type="button" class="calc-btn" data-calc="9">9</button>
+      <button type="button" class="calc-btn calc-op" data-calc="/">÷</button>
+
+      <button type="button" class="calc-btn" data-calc="4">4</button>
+      <button type="button" class="calc-btn" data-calc="5">5</button>
+      <button type="button" class="calc-btn" data-calc="6">6</button>
+      <button type="button" class="calc-btn calc-op" data-calc="*">×</button>
+
+      <button type="button" class="calc-btn" data-calc="1">1</button>
+      <button type="button" class="calc-btn" data-calc="2">2</button>
+      <button type="button" class="calc-btn" data-calc="3">3</button>
+      <button type="button" class="calc-btn calc-op" data-calc="-">−</button>
+
+      <button type="button" class="calc-btn" data-calc="0">0</button>
+      <button type="button" class="calc-btn" data-calc=".">.</button>
+      <button type="button" class="calc-btn calc-eq" data-calc="=">=</button>
+      <button type="button" class="calc-btn calc-op" data-calc="+">+</button>
     </div>
   </div>
 </div>
@@ -2476,6 +2632,39 @@
     return Number.isFinite(n) ? n : 0;
   }
 
+  // Evaluates a plain arithmetic expression (+ - * / . ( )) safely — used by
+  // both the calculator modal and inline math in the amount field. Returns
+  // NaN for anything that isn't pure arithmetic (strict character whitelist,
+  // no identifiers/property access reachable, so it's not an arbitrary-code
+  // eval despite using Function under the hood).
+  function safeEvalMath(expr) {
+    const cleaned = String(expr).trim();
+    if (!cleaned || !/[0-9]/.test(cleaned)) return NaN;
+    if (!/^[0-9+\-*/.() ]+$/.test(cleaned)) return NaN;
+    if (cleaned.includes('**')) return NaN;
+    try {
+      const result = Function(`"use strict"; return (${cleaned});`)();
+      return typeof result === 'number' && Number.isFinite(result) ? result : NaN;
+    } catch {
+      return NaN;
+    }
+  }
+
+  // Lets the amount field double as a quick calculator: "350+50" resolves
+  // to 400 when you leave the field or press Enter, so there's no need to
+  // do the math elsewhere first.
+  function looksLikeMathExpr(value) {
+    const s = String(value).trim();
+    if (!s) return false;
+    return /[+\-*/]/.test(s.replace(/^-/, '')); // ignore a lone leading minus
+  }
+
+  function evaluateAmountField(el) {
+    if (!looksLikeMathExpr(el.value)) return;
+    const result = safeEvalMath(el.value);
+    if (Number.isFinite(result)) el.value = (Math.round(result * 100) / 100).toFixed(2);
+  }
+
   function queuePaymentSave(cardId) {
     clearTimeout(paymentSaveTimers[cardId]);
     paymentSaveTimers[cardId] = setTimeout(() => savePayment(cardId), 450);
@@ -2522,21 +2711,25 @@
     fill.style.strokeDashoffset = WHEEL_CIRCUMFERENCE * (1 - ratio);
     thumb.style.transform = `rotate(${ratio * 360}deg)`;
 
-    // The input is a one-time "add an amount" box, not a live editor of the
-    // running total — it always stays blank/disabled rather than mirroring `paid`.
+    // The input is a one-time "add or reduce by an amount" box, not a live
+    // editor of the running total — it always stays blank rather than
+    // mirroring `paid`. Negative values are allowed so a payment can be
+    // corrected back down; the total still can't go below 0 or above owed.
     input.max      = left.toFixed(2);
-    input.disabled = owed <= 0 || left <= 0;
+    input.min      = (-paid).toFixed(2);
+    input.disabled = owed <= 0;
 
     document.getElementById(`wheel-${cardId}-paid`).textContent = fmt(paid);
     document.getElementById(`wheel-${cardId}-left`).textContent = `${fmt(left)} left`;
   }
 
-  // Commits whatever's typed in a card's "add amount" box as an increment on
-  // top of the existing paid total, then clears the box (one-time use).
+  // Commits whatever's typed in a card's add/reduce box as a delta on top of
+  // the existing paid total (negative to correct a payment back down), then
+  // clears the box (one-time use).
   function commitPaymentAdd(cardId, input) {
     const delta = moneyNumber(input.value);
     input.value = '';
-    if (!(delta > 0)) { renderPaymentWheel(cardId); return; }
+    if (!delta) { renderPaymentWheel(cardId); return; }
     setPayment(cardId, paymentState[cardId].paid + delta);
   }
 
@@ -2659,12 +2852,14 @@
   let amountDisplayMode    = 'expenses';
   let showPaymentTracker   = true;
   let fractionalRecurring  = false;
+  let showHomeToggle       = true;
 
   const themeStorageKey            = () => `ft_theme_${currentUser || 'default'}`;
   const homeLabelStorageKey        = () => `ft_homeLabel_${currentUser || 'default'}`;
   const amountModeStorageKey       = () => `ft_amountMode_${currentUser || 'default'}`;
   const paymentTrackerStorageKey   = () => `ft_paymentTracker_${currentUser || 'default'}`;
   const fractionalRecurStorageKey  = () => `ft_fracRecurring_${currentUser || 'default'}`;
+  const homeToggleStorageKey       = () => `ft_homeToggleVisible_${currentUser || 'default'}`;
 
   function applyTheme(theme) {
     currentTheme = theme;
@@ -2756,12 +2951,21 @@
     renderRecurring();
   }
 
+  function setHomeToggleVisible(visible) {
+    showHomeToggle = visible;
+    localStorage.setItem(homeToggleStorageKey(), visible ? '1' : '0');
+    document.querySelectorAll('.ct-home-toggle-wrap').forEach(el => {
+      el.style.display = visible ? '' : 'none';
+    });
+  }
+
   function loadUserSettings() {
     currentTheme        = localStorage.getItem(themeStorageKey()) || 'midnight';
     homeLabel            = localStorage.getItem(homeLabelStorageKey()) || 'Home';
     amountDisplayMode    = localStorage.getItem(amountModeStorageKey()) || 'expenses';
     showPaymentTracker   = localStorage.getItem(paymentTrackerStorageKey()) !== '0';
     fractionalRecurring  = localStorage.getItem(fractionalRecurStorageKey()) === '1';
+    showHomeToggle       = localStorage.getItem(homeToggleStorageKey()) !== '0';
     applyTheme(currentTheme);
     applyHomeLabel();
   }
@@ -2772,6 +2976,7 @@
     document.getElementById('settings-home-label').value = homeLabel;
     document.getElementById('settings-payment-tracker-toggle').checked = showPaymentTracker;
     document.getElementById('settings-fractional-recurring-toggle').checked = fractionalRecurring;
+    document.getElementById('settings-home-toggle-toggle').checked = showHomeToggle;
     applyHomeLabel();
     document.getElementById('settings-modal-overlay').classList.add('visible');
     document.body.style.overflow = 'hidden';
@@ -2797,6 +3002,113 @@
   });
   document.getElementById('settings-fractional-recurring-toggle').addEventListener('change', e => {
     setFractionalRecurring(e.target.checked);
+  });
+  document.getElementById('settings-home-toggle-toggle').addEventListener('change', e => {
+    setHomeToggleVisible(e.target.checked);
+  });
+
+  // ── Calculator ──
+  let calcExpr       = '';
+  let calcLastResult = null;
+
+  function formatCalcResult(n) {
+    return String(Math.round(n * 1e6) / 1e6);
+  }
+
+  function calcRenderLive() {
+    document.getElementById('calc-expression').innerHTML = calcExpr
+      ? calcExpr.replace(/\*/g, '×').replace(/\//g, '÷')
+      : '&nbsp;';
+
+    const resultEl     = document.getElementById('calc-result');
+    const useEntryWrap = document.getElementById('calc-use-entry');
+
+    if (!calcExpr) {
+      resultEl.textContent = '0';
+      resultEl.classList.remove('error');
+      calcLastResult = null;
+      useEntryWrap.style.display = 'none';
+      return;
+    }
+
+    const val = safeEvalMath(calcExpr);
+    if (Number.isFinite(val)) {
+      const formatted = formatCalcResult(val);
+      resultEl.textContent = formatted;
+      resultEl.classList.remove('error');
+      calcLastResult = val;
+      document.getElementById('calc-use-entry-amount').textContent = formatted;
+      useEntryWrap.style.display = '';
+    } else {
+      resultEl.textContent = 'Error';
+      resultEl.classList.add('error');
+      calcLastResult = null;
+      useEntryWrap.style.display = 'none';
+    }
+  }
+
+  function calcPress(key) {
+    if (key === 'clear') {
+      calcExpr = '';
+    } else if (key === 'backspace') {
+      calcExpr = calcExpr.slice(0, -1);
+    } else if (key === '=') {
+      if (Number.isFinite(calcLastResult)) calcExpr = formatCalcResult(calcLastResult);
+    } else {
+      calcExpr += key;
+    }
+    calcRenderLive();
+  }
+
+  function openCalcModal() {
+    calcRenderLive();
+    document.getElementById('calc-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeCalcModal() {
+    document.getElementById('calc-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('btn-calculator').addEventListener('click', openCalcModal);
+  document.getElementById('calc-modal-close').addEventListener('click', closeCalcModal);
+  document.getElementById('calc-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('calc-modal-overlay')) closeCalcModal();
+  });
+  document.querySelectorAll('.calc-btn').forEach(btn => {
+    btn.addEventListener('click', () => calcPress(btn.dataset.calc));
+  });
+  document.getElementById('calc-use-entry-btn').addEventListener('click', () => {
+    if (!Number.isFinite(calcLastResult)) return;
+    const amount = Math.round(calcLastResult * 100) / 100;
+    calcExpr = '';
+    closeCalcModal();
+    openForm();
+    document.getElementById('f-amount').value = amount.toFixed(2);
+    setTimeout(() => document.getElementById('f-name').focus(), 100);
+  });
+
+  // Keyboard support while the calculator is open — typed symbols work
+  // directly (no need to click the on-screen keys), and Enter acts as "=".
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('calc-modal-overlay').classList.contains('visible')) return;
+    if (/^[0-9.()+\-*/]$/.test(e.key)) {
+      e.preventDefault();
+      calcPress(e.key);
+    } else if (e.key.toLowerCase() === 'x') {
+      e.preventDefault();
+      calcPress('*');
+    } else if (e.key === 'Enter' || e.key === '=') {
+      e.preventDefault();
+      calcPress('=');
+    } else if (e.key === 'Backspace') {
+      e.preventDefault();
+      calcPress('backspace');
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeCalcModal();
+    }
   });
 
   // ── Card / payment method management ──
@@ -3005,6 +3317,7 @@
       const homeToggleWrap = document.createElement('div');
       homeToggleWrap.className = 'ct-home-toggle-wrap';
       homeToggleWrap.title = `Include ${homeLabel} Expenses charged to this card`;
+      homeToggleWrap.style.display = showHomeToggle ? '' : 'none';
       homeToggleWrap.addEventListener('click', e => e.stopPropagation());
       const homeToggleLabel = document.createElement('label');
       homeToggleLabel.className = 'switch-label mini';
@@ -3058,10 +3371,9 @@
       input.className   = 'payment-input';
       input.id           = `pay-${slug}`;
       input.type          = 'number';
-      input.min            = '0';
       input.step            = '0.01';
       input.inputMode        = 'decimal';
-      input.placeholder       = 'Add amount';
+      input.placeholder       = 'Add or -reduce';
       inputWrap.appendChild(input);
       trackerWrap.appendChild(inputWrap);
 
@@ -3436,8 +3748,25 @@
   });
 
   // Submit
+  document.getElementById('f-amount').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    evaluateAmountField(e.target);
+  });
+  document.getElementById('f-amount').addEventListener('blur', e => evaluateAmountField(e.target));
+
   document.getElementById('entry-form').addEventListener('submit', async e => {
     e.preventDefault();
+
+    const amountInput = document.getElementById('f-amount');
+    evaluateAmountField(amountInput);
+    const amountValue = moneyNumber(amountInput.value);
+    if (!(amountValue > 0)) {
+      showToast('Enter a valid amount', true);
+      amountInput.focus();
+      return;
+    }
+
     const btn = document.getElementById('btn-submit');
     btn.disabled    = true;
     btn.textContent = editingTransaction ? 'Updating…' : 'Saving…';
@@ -3447,7 +3776,7 @@
     const base = {
       name:     document.getElementById('f-name').value.trim(),
       date:     entryDateValue,
-      amount:   document.getElementById('f-amount').value,
+      amount:   amountValue,
       cardType: document.getElementById('f-cardtype').value,
     };
 
@@ -3723,9 +4052,11 @@
     return CAT_ICON[t.category] || (t.category ? t.category.slice(0, 2).toUpperCase() : '?');
   }
 
-  function txSub(t) {
+  function txSub(t, showCard) {
     if (t.source === 'home') return t.description || 'Home expense';
-    return [t.category, t.expType].filter(Boolean).join(' · ');
+    const parts = [t.category, t.expType];
+    if (showCard && t.cardType) parts.push(t.cardType);
+    return parts.filter(Boolean).join(' · ');
   }
 
   function formatDateHeader(iso) {
@@ -3745,6 +4076,10 @@
       container.innerHTML = '<div class="tx-empty">No transactions found</div>';
       return;
     }
+
+    // "Total Expenses" view (card modal with no specific card filter) spans
+    // every card, so show which card each transaction was made on for reference.
+    const showCardInSub = modalSource === 'card' && (!activeCardMeta || !activeCardMeta.key);
 
     // Group by date
     const groups = {};
@@ -3785,7 +4120,7 @@
 
         const sub = document.createElement('div');
         sub.className   = 'tx-sub';
-        sub.textContent = txSub(t);
+        sub.textContent = txSub(t, showCardInSub);
         body.appendChild(sub);
 
         card.appendChild(body);
@@ -3836,6 +4171,7 @@
         amtStr.includes(q) ||
         (t.category    || '').toLowerCase().includes(q) ||
         (t.expType     || '').toLowerCase().includes(q) ||
+        (t.cardType    || '').toLowerCase().includes(q) ||
         (t.description || '').toLowerCase().includes(q)
       );
     });
@@ -4204,6 +4540,7 @@
         else if (modalSource === 'income') fetchIncomeTxns();
         else if (modalSource === 'home')   fetchHomeTxns();
         loadData();
+        if (source !== 'home') loadRecurring();
       } else {
         showToast(data.error || 'Delete failed', true);
         closeConfirm();
@@ -4390,7 +4727,12 @@
       const actions = document.createElement('div');
       actions.className = 'recurring-actions';
 
-      if (fractionalRecurring) {
+      if (fractionalRecurring && item.charged) {
+        const paidLabel = document.createElement('div');
+        paidLabel.className = 'recurring-paid-label';
+        paidLabel.textContent = 'PAID';
+        actions.appendChild(paidLabel);
+      } else if (fractionalRecurring) {
         const remaining  = Math.max(item.amount - paid, 0);
         const quarterAmt = item.amount / 4;
         const halfAmt    = item.amount / 2;
