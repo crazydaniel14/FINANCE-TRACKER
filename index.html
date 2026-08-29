@@ -2732,6 +2732,7 @@
   let lastCardTotals       = {};
   let lastHomeCardTotals   = {};
   let lastCardIncomeTotals = {};
+  let lastCardTransfersNet = {};
   let lastCardPayments     = {};
   // Matched by substring against the card's name (case-insensitive), so
   // e.g. "Chase Sapphire" or "My Capital One Card" still pick up a logo.
@@ -3081,7 +3082,7 @@
     setTimeout(() => { t.className = 'toast' + (isError ? ' error' : ''); }, 3000);
   }
 
-  function renderCards(income, expenses, net, homeTotal, cardTotals, cardPayments, carryover, adjustedNet, homeCardTotals, cardIncomeTotals) {
+  function renderCards(income, expenses, net, homeTotal, cardTotals, cardPayments, carryover, adjustedNet, homeCardTotals, cardIncomeTotals, cardTransfersNet) {
     document.getElementById('card-income').textContent   = fmt(income);
     document.getElementById('card-expenses').textContent = fmt(expenses);
     document.getElementById('card-home').textContent     = fmt(homeTotal ?? 0);
@@ -3092,6 +3093,7 @@
     lastCardTotals       = cardTotals || {};
     lastHomeCardTotals   = homeCardTotals || {};
     lastCardIncomeTotals = cardIncomeTotals || {};
+    lastCardTransfersNet = cardTransfersNet || {};
     lastCardPayments     = cardPayments || {};
     activeCardSlugs.forEach(slug => renderCardAmount(slug));
   }
@@ -3112,6 +3114,10 @@
     // into the net figure below so the card can reflect a real balance
     // instead of resetting to $0 every month.
     const balanceAdj = meta.type === 'debit' ? (lastCardPayments[key] ?? 0) : 0;
+    // Debit-to-debit transfers are excluded from cardVal/incomeVal (they
+    // aren't spending or income), but they're real money moving in or out
+    // of this account, so they still need to shift its balance in net mode.
+    const transferAdj = meta.type === 'debit' ? (lastCardTransfersNet[key] ?? 0) : 0;
 
     const el    = document.getElementById('ct-' + slug);
     const subEl = document.getElementById('ct-' + slug + '-sub');
@@ -3122,7 +3128,7 @@
     const effectiveMode = meta.type === 'debit' ? amountDisplayMode : 'expenses';
 
     if (effectiveMode === 'net') {
-      const net = incomeVal - expenseVal + balanceAdj;
+      const net = incomeVal - expenseVal + balanceAdj + transferAdj;
       if (net > 0) {
         el.textContent = `+${fmt(net)}`;
         el.className   = 'ct-amount green';
@@ -4126,7 +4132,7 @@
         availableMonths = data.availableMonths;
       }
 
-      renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals, data.cardPayments, data.carryover ?? 0, data.adjustedNet ?? data.net, data.homeCardTotals, data.cardIncomeTotals);
+      renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals, data.cardPayments, data.carryover ?? 0, data.adjustedNet ?? data.net, data.homeCardTotals, data.cardIncomeTotals, data.cardTransfersNet);
 
       // Fallback in case backend doesn't return categoryTotals/typeTotals immediately
       if (!data.categoryTotals || !data.typeTotals) {
