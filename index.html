@@ -4909,8 +4909,6 @@
   }
 
   // ── Reimbursed-into account picker ──
-  let pendingReimburse = null; // the transaction awaiting an account pick
-
   function openReimburseAccountModal(t) {
     const debitSlugs = activeCardSlugs.filter(s => cardMeta[s].type === 'debit');
     if (!debitSlugs.length) {
@@ -4918,7 +4916,6 @@
       renderReimbursementTxns(reimbursementTxns);
       return;
     }
-    pendingReimburse = t;
     document.getElementById('reimburse-account-hint').textContent =
       `Which account did the ${fmt(t.amount)} for "${t.name}" get reimbursed into?`;
 
@@ -4931,7 +4928,7 @@
       btn.textContent = cardMeta[slug].name;
       btn.addEventListener('click', () => {
         closeReimburseAccountModal();
-        confirmSetReimbursed(pendingReimburse, true, cardMeta[slug].name);
+        confirmSetReimbursed(t, true, cardMeta[slug].name);
       });
       list.appendChild(btn);
     });
@@ -4943,7 +4940,6 @@
   function closeReimburseAccountModal() {
     document.getElementById('reimburse-account-modal-overlay').classList.remove('visible');
     document.body.style.overflow = '';
-    pendingReimburse = null;
     // Cancelling leaves the toggle where it was — re-render to undo the
     // checkbox's own optimistic UI state.
     renderReimbursementTxns(reimbursementTxns);
