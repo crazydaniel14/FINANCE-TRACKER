@@ -1903,6 +1903,36 @@
       background: rgba(224, 85, 85, 0.1);
       opacity: 1;
     }
+    /* ── Fixed-expense note button (optional, via Settings) ── */
+    .btn-rec-note {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      width: 26px; height: 26px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0.45;
+      flex-shrink: 0;
+      position: relative;
+      transition: background 0.15s, color 0.15s, opacity 0.15s;
+      padding: 0;
+    }
+    .btn-rec-note:hover { opacity: 0.9; color: var(--text); background: var(--surface-2); }
+    .btn-rec-note.has-note {
+      color: var(--gold);
+      opacity: 1;
+      background: var(--gold-dim);
+    }
+    .btn-rec-note.has-note::after {
+      content: '';
+      position: absolute;
+      top: 3px; right: 3px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: 1.5px solid var(--surface);
+    }
     .btn-add-rec {
       width: 100%;
       background: transparent;
@@ -2604,6 +2634,27 @@
   </div>
 </div>
 
+<!-- Fixed expense note (private, for your own reference) -->
+<div class="modal-overlay" id="recurring-note-modal-overlay" role="dialog" aria-modal="true" aria-label="Note">
+  <div class="modal-card" id="recurring-note-modal-card" style="max-width: 340px;">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="modal-title" id="recurring-note-modal-title">Note</div>
+      <button class="modal-close" id="recurring-note-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="form-group col-span" style="margin-bottom: 18px;">
+      <textarea id="recurring-note-input" placeholder="A private note to yourself about this fixed expense…" rows="4"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-cancel" id="recurring-note-cancel">Cancel</button>
+      <button type="button" class="btn-save" id="recurring-note-save">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Transfer between debit accounts modal -->
 <div class="modal-overlay" id="transfer-modal-overlay" role="dialog" aria-modal="true" aria-label="Transfer Between Accounts">
   <div class="modal-card" id="transfer-modal-card" style="max-width: 380px;">
@@ -2704,6 +2755,17 @@
       </div>
       <label class="switch-label mini">
         <input type="checkbox" id="settings-fractional-recurring-toggle">
+        <span class="switch-slider"></span>
+      </label>
+    </div>
+
+    <div class="settings-section settings-toggle-row">
+      <div>
+        <label class="field-label">Fixed Expense Notes</label>
+        <div class="settings-hint">Adds a message button next to each fixed expense's amount for a private note to yourself — it lights up whenever that expense has a note saved.</div>
+      </div>
+      <label class="switch-label mini">
+        <input type="checkbox" id="settings-recurring-notes-toggle">
         <span class="switch-slider"></span>
       </label>
     </div>
@@ -3271,12 +3333,14 @@
   let showPaymentTrackerCredit   = true;
   let showPaymentTrackerDebit    = true;
   let fractionalRecurring        = false;
+  let showRecurringNotes         = false;
 
   const themeStorageKey                 = () => `ft_theme_${currentUser || 'default'}`;
   const amountModeStorageKey            = () => `ft_amountMode_${currentUser || 'default'}`;
   const paymentTrackerCreditStorageKey  = () => `ft_paymentTrackerCredit_${currentUser || 'default'}`;
   const paymentTrackerDebitStorageKey   = () => `ft_paymentTrackerDebit_${currentUser || 'default'}`;
   const fractionalRecurStorageKey       = () => `ft_fracRecurring_${currentUser || 'default'}`;
+  const recurringNotesStorageKey        = () => `ft_recurringNotes_${currentUser || 'default'}`;
 
   function applyTheme(theme) {
     currentTheme = theme;
@@ -3354,12 +3418,19 @@
     renderRecurring();
   }
 
+  function setRecurringNotesVisible(enabled) {
+    showRecurringNotes = enabled;
+    localStorage.setItem(recurringNotesStorageKey(), enabled ? '1' : '0');
+    renderRecurring();
+  }
+
   function loadUserSettings() {
     currentTheme              = localStorage.getItem(themeStorageKey()) || 'midnight';
     amountDisplayMode         = localStorage.getItem(amountModeStorageKey()) || 'expenses';
     showPaymentTrackerCredit  = localStorage.getItem(paymentTrackerCreditStorageKey()) !== '0';
     showPaymentTrackerDebit   = localStorage.getItem(paymentTrackerDebitStorageKey()) !== '0';
     fractionalRecurring       = localStorage.getItem(fractionalRecurStorageKey()) === '1';
+    showRecurringNotes        = localStorage.getItem(recurringNotesStorageKey()) === '1';
     applyTheme(currentTheme);
   }
 
@@ -3417,6 +3488,7 @@
     document.getElementById('settings-payment-tracker-credit-toggle').checked = showPaymentTrackerCredit;
     document.getElementById('settings-payment-tracker-debit-toggle').checked = showPaymentTrackerDebit;
     document.getElementById('settings-fractional-recurring-toggle').checked = fractionalRecurring;
+    document.getElementById('settings-recurring-notes-toggle').checked = showRecurringNotes;
     document.getElementById('settings-modal-overlay').classList.add('visible');
     document.body.style.overflow = 'hidden';
   }
@@ -3443,6 +3515,9 @@
   });
   document.getElementById('settings-fractional-recurring-toggle').addEventListener('change', e => {
     setFractionalRecurring(e.target.checked);
+  });
+  document.getElementById('settings-recurring-notes-toggle').addEventListener('change', e => {
+    setRecurringNotesVisible(e.target.checked);
   });
   document.getElementById('settings-migrate-home-btn').addEventListener('click', async () => {
     if (!confirm('Copy old Home Expenses entries into the new Reimbursement system and clear them from the old table?')) return;
@@ -5443,6 +5518,16 @@
       actions.appendChild(delBtn);
 
       el.appendChild(info);
+      if (showRecurringNotes) {
+        const noteBtn = document.createElement('button');
+        noteBtn.type      = 'button';
+        noteBtn.className = 'btn-rec-note' + (item.note ? ' has-note' : '');
+        noteBtn.setAttribute('aria-label', item.note ? 'Edit note' : 'Add note');
+        noteBtn.title      = item.note || 'Add a note';
+        noteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+        noteBtn.addEventListener('click', e => { e.stopPropagation(); openRecurringNoteModal(item); });
+        el.appendChild(noteBtn);
+      }
       el.appendChild(amount);
       el.appendChild(actions);
       container.appendChild(el);
@@ -5541,6 +5626,52 @@
       }
     } catch (err) {
       showToast(`Error: ${err.message}`, true);
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Save';
+    }
+  });
+
+  // ── Fixed expense note (private, for your own reference) ──
+  let editingRecurringNoteId = null;
+
+  function openRecurringNoteModal(item) {
+    editingRecurringNoteId = item.id;
+    document.getElementById('recurring-note-modal-title').textContent = `Note — ${item.name}`;
+    document.getElementById('recurring-note-input').value = item.note || '';
+    document.getElementById('recurring-note-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('recurring-note-input').focus(), 80);
+  }
+
+  function closeRecurringNoteModal() {
+    document.getElementById('recurring-note-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+    editingRecurringNoteId = null;
+  }
+
+  document.getElementById('recurring-note-modal-close').addEventListener('click', closeRecurringNoteModal);
+  document.getElementById('recurring-note-cancel').addEventListener('click', closeRecurringNoteModal);
+  document.getElementById('recurring-note-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('recurring-note-modal-overlay')) closeRecurringNoteModal();
+  });
+
+  document.getElementById('recurring-note-save').addEventListener('click', async () => {
+    if (!editingRecurringNoteId) return;
+    const id   = editingRecurringNoteId;
+    const note = document.getElementById('recurring-note-input').value.trim();
+    const btn  = document.getElementById('recurring-note-save');
+    btn.disabled    = true;
+    btn.textContent = 'Saving…';
+    try {
+      const data = await fetch(buildUrl({ action: 'setRecurringNote', id, note })).then(r => r.json());
+      if (!data.success) throw new Error(data.error || 'Could not save note');
+      const item = recurringItems.find(r => r.id === id);
+      if (item) item.note = note;
+      closeRecurringNoteModal();
+      renderRecurring();
+    } catch (err) {
+      showToast(`Note not saved: ${err.message}`, true);
     } finally {
       btn.disabled    = false;
       btn.textContent = 'Save';
