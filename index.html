@@ -655,16 +655,6 @@
     .ct-copy-btn:hover   { color: var(--gold); background: var(--gold-dim); }
     .ct-copy-btn.copied  { color: var(--green); }
 
-    .ct-home-toggle-wrap {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.62rem;
-      font-weight: 600;
-      color: var(--text-3);
-      letter-spacing: 0.03em;
-    }
-
     .payment-wheel {
       width: min(112px, 100%);
       aspect-ratio: 1;
@@ -1175,11 +1165,12 @@
     .exp-pill:hover { border-color: var(--gold); color: var(--gold); }
     .exp-pill.active.essential   { background: rgba(62,207,142,0.08); border-color: var(--green); color: var(--green); }
     .exp-pill.active.unnecessary { background: rgba(224,85,85,0.08);  border-color: var(--red);   color: var(--red);   }
-    .exp-pill.active.income      { background: var(--gold-dim);       border-color: var(--gold);  color: var(--gold);  }
+    .exp-pill.active.reimbursement { background: rgba(96,144,208,0.08); border-color: var(--blue); color: var(--blue); }
 
     /* mode visibility */
-    #entry-form.mode-home     .expenses-only { display: none; }
-    #entry-form.mode-expenses .home-only     { display: none; }
+    #entry-form.mode-income .exptype-section { display: none; }
+    .note-only { display: none; }
+    #entry-form.mode-expenses.pill-reimbursement .note-only { display: block; }
 
     /* ── Form actions ── */
     .form-actions { display: flex; gap: 10px; }
@@ -1314,7 +1305,7 @@
     .tx-card.essential   { border-left-color: var(--green); }
     .tx-card.unnecessary { border-left-color: var(--red);   }
     .tx-card.income      { border-left-color: var(--gold);  }
-    .tx-card.home-tx     { border-left-color: var(--blue);  }
+    .tx-card.reimbursement { border-left-color: var(--blue);  }
 
     .tx-card.pickable { cursor: pointer; }
     .tx-card.pickable.selected {
@@ -1350,7 +1341,18 @@
     .tx-icon.essential   { background: rgba(62,207,142,0.1);  color: var(--green); }
     .tx-icon.unnecessary { background: rgba(224,85,85,0.1);   color: var(--red);   }
     .tx-icon.income      { background: rgba(201,168,76,0.1);  color: var(--gold);  }
-    .tx-icon.home-tx     { background: rgba(96,144,208,0.1);  color: var(--blue);  }
+    .tx-icon.reimbursement { background: rgba(96,144,208,0.1);  color: var(--blue);  }
+    .tx-reimb-badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      margin-top: 2px;
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 6px;
+      width: fit-content;
+    }
+    .tx-reimb-badge.reimbursed { color: var(--green); background: rgba(62,207,142,0.1); }
+    .tx-reimb-badge.pending    { color: var(--amber); background: rgba(212,144,58,0.1); }
 
     .tx-body { flex: 1; min-width: 0; }
     .tx-name {
@@ -2184,9 +2186,9 @@
       <div class="value" id="card-net">—</div>
       <div id="card-net-carryover" class="carryover-label"></div>
     </div>
-    <div class="card card-clickable" id="home-summary-card">
-      <div class="label" id="home-card-label">Home Transactions</div>
-      <div class="value amber" id="card-home">—</div>
+    <div class="card card-clickable" id="reimbursement-summary-card">
+      <div class="label">Reimbursement</div>
+      <div class="value amber" id="card-reimbursement">—</div>
     </div>
   </div>
 
@@ -2281,8 +2283,8 @@
 
     <!-- Table selector -->
     <div class="table-toggle" id="entry-table-toggle">
-      <button type="button" class="toggle-opt active" data-table="expenses">My Expenses</button>
-      <button type="button" class="toggle-opt" data-table="home" id="entry-toggle-home-label">Home Expenses</button>
+      <button type="button" class="toggle-opt active" data-table="expenses">Expenses</button>
+      <button type="button" class="toggle-opt" data-table="income">Income</button>
     </div>
 
     <form id="entry-form" class="mode-expenses" novalidate>
@@ -2314,8 +2316,7 @@
           </select>
         </div>
 
-        <!-- My Expenses only -->
-        <div class="form-group expenses-only">
+        <div class="form-group">
           <label for="f-category">Category</label>
           <input type="text" id="f-category" list="categories-list" placeholder="Select or type category…" required>
           <datalist id="categories-list">
@@ -2327,20 +2328,20 @@
           </datalist>
         </div>
 
-        <!-- Home Expenses only -->
-        <div class="form-group home-only col-span">
-          <label for="f-description">Description</label>
-          <textarea id="f-description" placeholder="Brief context for this transaction…"></textarea>
+        <!-- Reimbursement pill only -->
+        <div class="form-group note-only col-span">
+          <label for="f-note">Note</label>
+          <textarea id="f-note" placeholder="Who this was for, or any context…"></textarea>
         </div>
       </div>
 
-      <!-- Expense type pills (My Expenses only) -->
-      <div class="exptype-section expenses-only">
+      <!-- Expense type pills (Expenses mode only) -->
+      <div class="exptype-section">
         <label class="field-label">Expense Type</label>
         <div class="exptype-pills">
           <button type="button" class="exp-pill essential active" data-value="Essential">Essential</button>
           <button type="button" class="exp-pill unnecessary" data-value="Unnecessary">Unnecessary</button>
-          <button type="button" class="exp-pill income" data-value="Income">Income</button>
+          <button type="button" class="exp-pill reimbursement" data-value="Reimbursement">Reimbursement</button>
         </div>
       </div>
 
@@ -2384,24 +2385,24 @@
   </div>
 </div>
 
-<!-- Home transactions + reimbursement modal -->
-<div class="modal-overlay" id="home-modal-overlay" role="dialog" aria-modal="true" aria-label="Home Expenses">
-  <div class="modal-card" id="home-modal-card">
+<!-- Reimbursement modal — reimbursable purchases + reimbursed tracking + message -->
+<div class="modal-overlay" id="reimbursement-modal-overlay" role="dialog" aria-modal="true" aria-label="Reimbursement">
+  <div class="modal-card" id="reimbursement-modal-card">
     <div class="drag-handle"></div>
 
     <div class="modal-header">
       <div class="card-modal-meta">
-        <div class="card-modal-logo" style="background:rgba(212,144,58,0.12);font-size:1.1rem;color:var(--amber);">⌂</div>
+        <div class="card-modal-logo" style="background:rgba(96,144,208,0.12);font-size:1.1rem;color:var(--blue);">⇄</div>
         <div>
-          <div class="card-modal-name" id="home-modal-card-name">Home Expenses</div>
-          <div class="card-modal-total" id="home-modal-total"></div>
+          <div class="card-modal-name">Reimbursement</div>
+          <div class="card-modal-total" id="reimbursement-modal-total"></div>
         </div>
       </div>
-      <button class="modal-close" id="home-modal-close" aria-label="Close">✕</button>
+      <button class="modal-close" id="reimbursement-modal-close" aria-label="Close">✕</button>
     </div>
 
     <!-- Transaction list -->
-    <div id="home-tx-list">
+    <div id="reimbursement-tx-list">
       <div class="tx-empty"><span class="spinner"></span> Loading…</div>
     </div>
 
@@ -2412,14 +2413,30 @@
       <div class="msg-divider-line"></div>
     </div>
 
-    <div class="msg-box" id="home-msg-box"></div>
+    <div class="msg-box" id="reimbursement-msg-box"></div>
 
-    <button class="btn-copy" id="btn-copy-msg">
+    <button class="btn-copy" id="btn-copy-reimbursement-msg">
       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
       </svg>
       Copy Message
     </button>
+  </div>
+</div>
+
+<!-- Reimbursed-into account picker (which debit account received the money) -->
+<div class="modal-overlay" id="reimburse-account-modal-overlay" role="dialog" aria-modal="true" aria-label="Reimbursed Into">
+  <div class="modal-card" id="reimburse-account-modal-card" style="max-width: 360px;">
+    <div class="drag-handle"></div>
+
+    <div class="modal-header">
+      <div class="modal-title">Reimbursed Into</div>
+      <button class="modal-close" id="reimburse-account-modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="settings-hint" id="reimburse-account-hint" style="margin-bottom: 14px;"></div>
+    <div class="pay-source-list" id="reimburse-account-list"></div>
+    <button type="button" class="btn-cancel" id="reimburse-account-cancel" style="width: 100%; margin-top: 12px;">Cancel</button>
   </div>
 </div>
 
@@ -2691,21 +2708,10 @@
       </label>
     </div>
 
-    <div class="settings-section settings-toggle-row">
-      <div>
-        <label class="field-label">Card Home-Expense Toggle</label>
-        <div class="settings-hint">Shows the "Include Home Expenses" switch on each card. Turn off if you don't split Home Expenses by card.</div>
-      </div>
-      <label class="switch-label mini">
-        <input type="checkbox" id="settings-home-toggle-toggle" checked>
-        <span class="switch-slider"></span>
-      </label>
-    </div>
-
     <div class="settings-section">
-      <label class="field-label" for="settings-home-label">Home Summary Card Name</label>
-      <input type="text" id="settings-home-label" placeholder="Home" maxlength="24">
-      <div class="settings-hint">Used across the app, e.g. "<span class="settings-home-preview">Home</span> Transactions" and "<span class="settings-home-preview">Home</span> Expenses".</div>
+      <label class="field-label">Migrate Legacy Home Expenses</label>
+      <div class="settings-hint">One-time: copies any old Home Expenses entries into the new Reimbursement system, then clears them from the old table. Safe to run more than once — does nothing once there's nothing left to migrate.</div>
+      <button type="button" class="btn-cancel" id="settings-migrate-home-btn" style="margin-top: 8px; width: 100%;">Migrate Now</button>
     </div>
   </div>
 </div>
@@ -2791,9 +2797,7 @@
   let activeCardSlugs  = [];
   let cardMeta         = {}; // slug -> { name, archived }
   let paymentState     = {}; // slug -> { owed, paid }
-  let includeHomeForCard = {}; // slug -> bool, whether card total includes Home Expenses
   let lastCardTotals       = {};
-  let lastHomeCardTotals   = {};
   let lastCardIncomeTotals = {};
   let lastCardTransfersNet = {};
   let lastCardPayments     = {};
@@ -2849,7 +2853,7 @@
 
   // ── Editing an existing transaction ──
   let editingTransaction = null; // { source, rowIndex }
-  let editingModalSource = null; // 'card' | 'income' | 'home'
+  let editingModalSource = null; // 'card' | 'income' | 'reimbursement'
 
   // ── Net carryover display toggle ──
   let includeCarryover = localStorage.getItem('ft_includeCarryover') !== '0';
@@ -3145,16 +3149,15 @@
     setTimeout(() => { t.className = 'toast' + (isError ? ' error' : ''); }, 3000);
   }
 
-  function renderCards(income, expenses, net, homeTotal, cardTotals, cardPayments, carryover, adjustedNet, homeCardTotals, cardIncomeTotals, cardTransfersNet) {
-    document.getElementById('card-income').textContent   = fmt(income);
-    document.getElementById('card-expenses').textContent = fmt(expenses);
-    document.getElementById('card-home').textContent     = fmt(homeTotal ?? 0);
+  function renderCards(income, expenses, net, reimbursementTotal, cardTotals, cardPayments, carryover, adjustedNet, homeCardTotals, cardIncomeTotals, cardTransfersNet) {
+    document.getElementById('card-income').textContent       = fmt(income);
+    document.getElementById('card-expenses').textContent     = fmt(expenses);
+    document.getElementById('card-reimbursement').textContent = fmt(reimbursementTotal ?? 0);
 
     lastNetData = { net, carryover, adjustedNet };
     renderNetCard();
 
     lastCardTotals       = cardTotals || {};
-    lastHomeCardTotals   = homeCardTotals || {};
     lastCardIncomeTotals = cardIncomeTotals || {};
     lastCardTransfersNet = cardTransfersNet || {};
     lastCardPayments     = cardPayments || {};
@@ -3162,16 +3165,14 @@
   }
 
   // Recompute one CT card's displayed total (and payment wheel) from cached
-  // totals + the card's own "include Home Expenses" toggle state + the
-  // user's chosen amount-display mode (expenses only / net / split).
+  // totals + the user's chosen amount-display mode (expenses only / net / split).
   function renderCardAmount(slug) {
     const meta = cardMeta[slug];
     if (!meta) return;
     const key        = meta.name;
     const cardVal    = lastCardTotals[key] ?? 0;
-    const homeVal    = lastHomeCardTotals[key] ?? 0;
     const incomeVal  = lastCardIncomeTotals[key] ?? 0;
-    const expenseVal = cardVal + (includeHomeForCard[slug] ? homeVal : 0);
+    const expenseVal = cardVal;
     // For a debit account this is a manually-set account balance (see the
     // "Adjust Balance" modal), not "amount paid toward a bill" — it folds
     // into the net figure below so the card can reflect a real balance
@@ -3264,20 +3265,16 @@
     { id: 'split',    name: 'Expenses & Income (Split)', desc: 'Expense on top as usual, income below it in smaller green text.' },
   ];
   let currentTheme               = 'midnight';
-  let homeLabel                  = 'Home';
   let amountDisplayMode          = 'expenses';
   let showPaymentTrackerCredit   = true;
   let showPaymentTrackerDebit    = true;
   let fractionalRecurring        = false;
-  let showHomeToggle             = true;
 
   const themeStorageKey                 = () => `ft_theme_${currentUser || 'default'}`;
-  const homeLabelStorageKey             = () => `ft_homeLabel_${currentUser || 'default'}`;
   const amountModeStorageKey            = () => `ft_amountMode_${currentUser || 'default'}`;
   const paymentTrackerCreditStorageKey  = () => `ft_paymentTrackerCredit_${currentUser || 'default'}`;
   const paymentTrackerDebitStorageKey   = () => `ft_paymentTrackerDebit_${currentUser || 'default'}`;
   const fractionalRecurStorageKey       = () => `ft_fracRecurring_${currentUser || 'default'}`;
-  const homeToggleStorageKey            = () => `ft_homeToggleVisible_${currentUser || 'default'}`;
 
   function applyTheme(theme) {
     currentTheme = theme;
@@ -3304,31 +3301,6 @@
       btn.innerHTML = `<span class="theme-swatch-preview" style="background:linear-gradient(135deg, ${t.c1}, ${t.c2});"></span><span class="theme-swatch-name">${t.name}</span>`;
       btn.addEventListener('click', () => setTheme(t.id));
       grid.appendChild(btn);
-    });
-  }
-
-  function applyHomeLabel() {
-    const summaryLabel = document.getElementById('home-card-label');
-    if (summaryLabel) summaryLabel.textContent = `${homeLabel} Transactions`;
-    const modalName = document.getElementById('home-modal-card-name');
-    if (modalName) modalName.textContent = `${homeLabel} Expenses`;
-    const toggleLabel = document.getElementById('entry-toggle-home-label');
-    if (toggleLabel) toggleLabel.textContent = `${homeLabel} Expenses`;
-    document.querySelectorAll('.settings-home-preview').forEach(el => { el.textContent = homeLabel; });
-  }
-
-  function setHomeLabel(rawValue) {
-    homeLabel = (rawValue || '').trim() || 'Home';
-    localStorage.setItem(homeLabelStorageKey(), homeLabel);
-    applyHomeLabel();
-    // Update the per-card "include Home Expenses" toggle text/tooltip in
-    // place rather than rebuilding the cards, which would otherwise wipe
-    // their live totals until the next full data reload.
-    document.querySelectorAll('.ct-home-toggle-wrap').forEach(wrap => {
-      wrap.title = `Include ${homeLabel} Expenses charged to this card`;
-    });
-    document.querySelectorAll('.ct-home-toggle-label').forEach(label => {
-      label.textContent = homeLabel;
     });
   }
 
@@ -3380,24 +3352,13 @@
     renderRecurring();
   }
 
-  function setHomeToggleVisible(visible) {
-    showHomeToggle = visible;
-    localStorage.setItem(homeToggleStorageKey(), visible ? '1' : '0');
-    document.querySelectorAll('.ct-home-toggle-wrap').forEach(el => {
-      el.style.display = visible ? '' : 'none';
-    });
-  }
-
   function loadUserSettings() {
     currentTheme              = localStorage.getItem(themeStorageKey()) || 'midnight';
-    homeLabel                 = localStorage.getItem(homeLabelStorageKey()) || 'Home';
     amountDisplayMode         = localStorage.getItem(amountModeStorageKey()) || 'expenses';
     showPaymentTrackerCredit  = localStorage.getItem(paymentTrackerCreditStorageKey()) !== '0';
     showPaymentTrackerDebit   = localStorage.getItem(paymentTrackerDebitStorageKey()) !== '0';
     fractionalRecurring       = localStorage.getItem(fractionalRecurStorageKey()) === '1';
-    showHomeToggle            = localStorage.getItem(homeToggleStorageKey()) !== '0';
     applyTheme(currentTheme);
-    applyHomeLabel();
   }
 
   function renderAccountTypeList() {
@@ -3451,12 +3412,9 @@
     renderThemeGrid();
     renderAmountModeList();
     renderAccountTypeList();
-    document.getElementById('settings-home-label').value = homeLabel;
     document.getElementById('settings-payment-tracker-credit-toggle').checked = showPaymentTrackerCredit;
     document.getElementById('settings-payment-tracker-debit-toggle').checked = showPaymentTrackerDebit;
     document.getElementById('settings-fractional-recurring-toggle').checked = fractionalRecurring;
-    document.getElementById('settings-home-toggle-toggle').checked = showHomeToggle;
-    applyHomeLabel();
     document.getElementById('settings-modal-overlay').classList.add('visible');
     document.body.style.overflow = 'hidden';
   }
@@ -3471,7 +3429,6 @@
   document.getElementById('settings-modal-overlay').addEventListener('click', e => {
     if (e.target === document.getElementById('settings-modal-overlay')) closeSettingsModal();
   });
-  document.getElementById('settings-home-label').addEventListener('input', e => setHomeLabel(e.target.value));
   document.getElementById('settings-add-card-btn').addEventListener('click', () => {
     closeSettingsModal();
     openAddCardModal();
@@ -3485,8 +3442,23 @@
   document.getElementById('settings-fractional-recurring-toggle').addEventListener('change', e => {
     setFractionalRecurring(e.target.checked);
   });
-  document.getElementById('settings-home-toggle-toggle').addEventListener('change', e => {
-    setHomeToggleVisible(e.target.checked);
+  document.getElementById('settings-migrate-home-btn').addEventListener('click', async () => {
+    if (!confirm('Copy old Home Expenses entries into the new Reimbursement system and clear them from the old table?')) return;
+    const btn = document.getElementById('settings-migrate-home-btn');
+    btn.disabled = true;
+    btn.textContent = 'Migrating…';
+    try {
+      const data = await fetch(buildUrl({ action: 'migrateHomeToReimbursements' })).then(r => r.json());
+      if (!data.success) throw new Error(data.error || 'Migration failed');
+      showToast(data.migrated ? `Migrated ${data.migrated} transaction${data.migrated !== 1 ? 's' : ''}` : 'Nothing to migrate');
+      loadData();
+      if (document.getElementById('reimbursement-modal-overlay').classList.contains('visible')) fetchReimbursementTxns();
+    } catch (err) {
+      showToast(`Migration failed: ${err.message}`, true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Migrate Now';
+    }
   });
 
   // ── Calculator ──
@@ -3626,9 +3598,6 @@
       used.add(slug);
       cardMeta[slug]    = { name: c.name, archived: c.archived, type: c.type === 'debit' ? 'debit' : 'credit' };
       paymentState[slug] = { owed: 0, paid: 0 };
-      if (!(slug in includeHomeForCard)) {
-        includeHomeForCard[slug] = localStorage.getItem(`ft_includeHomeCard_${slug}`) === '1';
-      }
       if (!c.archived) activeCardSlugs.push(slug);
     });
     applySavedCardOrder();
@@ -3810,33 +3779,6 @@
       amountRow.appendChild(copyBtn);
 
       card.appendChild(amountRow);
-
-      const homeToggleWrap = document.createElement('div');
-      homeToggleWrap.className = 'ct-home-toggle-wrap';
-      homeToggleWrap.title = `Include ${homeLabel} Expenses charged to this card`;
-      homeToggleWrap.style.display = showHomeToggle ? '' : 'none';
-      homeToggleWrap.addEventListener('click', e => e.stopPropagation());
-      const homeToggleLabel = document.createElement('label');
-      homeToggleLabel.className = 'switch-label mini';
-      const homeToggleInput = document.createElement('input');
-      homeToggleInput.type    = 'checkbox';
-      homeToggleInput.id      = `ct-home-toggle-${slug}`;
-      homeToggleInput.checked = !!includeHomeForCard[slug];
-      homeToggleLabel.appendChild(homeToggleInput);
-      const homeToggleSlider = document.createElement('span');
-      homeToggleSlider.className = 'switch-slider';
-      homeToggleLabel.appendChild(homeToggleSlider);
-      homeToggleWrap.appendChild(homeToggleLabel);
-      const homeToggleText = document.createElement('span');
-      homeToggleText.className   = 'ct-home-toggle-label';
-      homeToggleText.textContent = homeLabel;
-      homeToggleWrap.appendChild(homeToggleText);
-      homeToggleInput.addEventListener('change', e => {
-        includeHomeForCard[slug] = e.target.checked;
-        localStorage.setItem(`ft_includeHomeCard_${slug}`, e.target.checked ? '1' : '0');
-        renderCardAmount(slug);
-      });
-      card.appendChild(homeToggleWrap);
 
       const trackerWrap = document.createElement('div');
       trackerWrap.className = 'ct-payment-tracker';
@@ -4195,7 +4137,7 @@
         availableMonths = data.availableMonths;
       }
 
-      renderCards(data.income, data.expenses, data.net, data.homeTotal, data.cardTotals, data.cardPayments, data.carryover ?? 0, data.adjustedNet ?? data.net, data.homeCardTotals, data.cardIncomeTotals, data.cardTransfersNet);
+      renderCards(data.income, data.expenses, data.net, data.reimbursementTotal, data.cardTotals, data.cardPayments, data.carryover ?? 0, data.adjustedNet ?? data.net, data.homeCardTotals, data.cardIncomeTotals, data.cardTransfersNet);
 
       // Fallback in case backend doesn't return categoryTotals/typeTotals immediately
       if (!data.categoryTotals || !data.typeTotals) {
@@ -4237,23 +4179,27 @@
     }
   }
 
-  // Table toggle
+  // Table toggle — "Expenses" vs "Income". Both write to the same Expenses
+  // table on the backend; this only picks the default expType and whether
+  // the Essential/Unnecessary/Reimbursement pills are shown.
   document.querySelectorAll('.toggle-opt').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.toggle-opt').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedTable = btn.dataset.table;
-      document.getElementById('entry-form').className =
-        selectedTable === 'home' ? 'mode-home' : 'mode-expenses';
+      const form = document.getElementById('entry-form');
+      form.className = selectedTable === 'income' ? 'mode-income' : 'mode-expenses';
+      form.classList.toggle('pill-reimbursement', selectedTable === 'expenses' && selectedExpType === 'Reimbursement');
     });
   });
 
-  // Expense type pills
+  // Expense type pills — also toggles the Reimbursement-only Note field.
   document.querySelectorAll('.exp-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       document.querySelectorAll('.exp-pill').forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
       selectedExpType = pill.dataset.value;
+      document.getElementById('entry-form').classList.toggle('pill-reimbursement', selectedExpType === 'Reimbursement');
     });
   });
 
@@ -4290,14 +4236,16 @@
       cardType: document.getElementById('f-cardtype').value,
     };
 
-    const extra = selectedTable === 'home'
-      ? { description: document.getElementById('f-description').value.trim() }
-      : { category: document.getElementById('f-category').value,
-          expType:  selectedExpType };
+    const expType = selectedTable === 'income' ? 'Income' : selectedExpType;
+    const extra = {
+      category: document.getElementById('f-category').value,
+      expType,
+      ...(expType === 'Reimbursement' ? { note: document.getElementById('f-note').value.trim() } : {}),
+    };
 
     const url = editingTransaction
       ? buildUrl({ action: 'update', source: editingTransaction.source, rowIndex: editingTransaction.rowIndex, ...base, ...extra })
-      : buildUrl({ action: 'append', table: selectedTable, ...base, ...extra });
+      : buildUrl({ action: 'append', table: 'expenses', ...base, ...extra });
 
     try {
       const res  = await fetch(url);
@@ -4312,9 +4260,9 @@
         closeForm();
         loadData();
         loadRecurring();
-        if (wasEditing && modalSource === 'card')        fetchCardTransactions();
-        else if (wasEditing && modalSource === 'income') fetchIncomeTxns();
-        else if (wasEditing && modalSource === 'home')   fetchHomeTxns();
+        if (wasEditing && modalSource === 'card')          fetchCardTransactions();
+        else if (wasEditing && modalSource === 'income')        fetchIncomeTxns();
+        else if (wasEditing && modalSource === 'reimbursement') fetchReimbursementTxns();
       } else {
         showToast(data.error || 'Something went wrong', true);
       }
@@ -4336,9 +4284,9 @@
   }
 
   const MODAL_SOURCE_OVERLAY_ID = {
-    card:   'card-modal-overlay',
-    income: 'income-modal-overlay',
-    home:   'home-modal-overlay',
+    card:          'card-modal-overlay',
+    income:        'income-modal-overlay',
+    reimbursement: 'reimbursement-modal-overlay',
   };
 
   function closeForm() {
@@ -4356,7 +4304,7 @@
     document.querySelector('[data-table="expenses"]').classList.add('active');
     document.getElementById('entry-form').className = 'mode-expenses';
 
-    // Editing opened on top of a card/income/home modal — bring it back into view.
+    // Editing opened on top of a card/income/reimbursement modal — bring it back into view.
     const overlayId = MODAL_SOURCE_OVERLAY_ID[editingModalSource];
     if (overlayId) {
       document.getElementById(overlayId).classList.add('visible');
@@ -4373,14 +4321,15 @@
   function openEditTransaction(t, modalSource) {
     editingTransaction = { source: t.source, rowIndex: t.rowIndex };
     editingModalSource = modalSource;
-    selectedTable = t.source === 'home' ? 'home' : 'expenses';
+    const isIncome = (t.expType || '').toLowerCase() === 'income';
+    selectedTable = isIncome ? 'income' : 'expenses';
 
     // Hide the underlying list modal so it doesn't intercept clicks behind the entry form.
     const overlayId = MODAL_SOURCE_OVERLAY_ID[modalSource];
     if (overlayId) document.getElementById(overlayId).classList.remove('visible');
 
     document.querySelectorAll('.toggle-opt').forEach(b => b.classList.toggle('active', b.dataset.table === selectedTable));
-    document.getElementById('entry-form').className = selectedTable === 'home' ? 'mode-home' : 'mode-expenses';
+    document.getElementById('entry-form').className = isIncome ? 'mode-income' : 'mode-expenses';
     document.getElementById('entry-table-toggle').style.display = 'none';
 
     document.getElementById('f-amount').value = t.amount;
@@ -4391,13 +4340,11 @@
     ensureCardOption(cardSel, t.cardType);
     cardSel.value = t.cardType || '';
 
-    if (selectedTable === 'home') {
-      document.getElementById('f-description').value = t.description || '';
-    } else {
-      document.getElementById('f-category').value = t.category || '';
-      selectedExpType = t.expType || 'Essential';
-      document.querySelectorAll('.exp-pill').forEach(p => p.classList.toggle('active', p.dataset.value === selectedExpType));
-    }
+    document.getElementById('f-category').value = t.category || '';
+    selectedExpType = isIncome ? 'Income' : (t.expType || 'Essential');
+    document.querySelectorAll('.exp-pill').forEach(p => p.classList.toggle('active', p.dataset.value === selectedExpType));
+    document.getElementById('entry-form').classList.toggle('pill-reimbursement', selectedExpType === 'Reimbursement');
+    document.getElementById('f-note').value = t.note || '';
 
     document.getElementById('entry-modal-title').textContent = 'Edit Entry';
     document.getElementById('btn-submit').textContent = 'Update Entry';
@@ -4423,7 +4370,7 @@
     if (e.key !== 'Escape') return;
     if (document.getElementById('confirm-overlay').classList.contains('visible')) { closeConfirm(); return; }
     if (document.getElementById('income-modal-overlay').classList.contains('visible')) closeIncomeModal();
-    else if (document.getElementById('home-modal-overlay').classList.contains('visible')) closeHomeModal();
+    else if (document.getElementById('reimbursement-modal-overlay').classList.contains('visible')) closeReimbursementModal();
     else if (document.getElementById('card-modal-overlay').classList.contains('visible')) closeCardModal();
     else if (document.getElementById('recurring-modal-overlay').classList.contains('visible')) closeRecurringModal();
     else if (document.getElementById('modal-overlay').classList.contains('visible')) closeForm();
@@ -4606,18 +4553,17 @@
   };
 
   function txTypeClass(t) {
-    if (t.source === 'home') return 'home-tx';
     return (t.expType || 'essential').toLowerCase();
   }
 
   function txIcon(t) {
-    if (t.source === 'home') return '⌂';
-    if ((t.expType || '').toLowerCase() === 'income') return '↑';
+    const type = (t.expType || '').toLowerCase();
+    if (type === 'income')        return '↑';
+    if (type === 'reimbursement') return '⇄';
     return CAT_ICON[t.category] || (t.category ? t.category.slice(0, 2).toUpperCase() : '?');
   }
 
   function txSub(t, showCard) {
-    if (t.source === 'home') return t.description || 'Home expense';
     const parts = [t.category, t.expType];
     if (showCard && t.cardType) parts.push(t.cardType);
     return parts.filter(Boolean).join(' · ');
@@ -4687,6 +4633,16 @@
         sub.textContent = txSub(t, showCardInSub);
         body.appendChild(sub);
 
+        // Highlights whether a reimbursable purchase has actually been paid
+        // back yet — the transaction itself always shows on the card it was
+        // charged to; this badge is just its reimbursed/pending status.
+        if ((t.expType || '').toLowerCase() === 'reimbursement') {
+          const badge = document.createElement('div');
+          badge.className = 'tx-reimb-badge' + (t.reimbursed ? ' reimbursed' : ' pending');
+          badge.textContent = t.reimbursed ? `Reimbursed · ${t.reimbursedAccount}` : 'Not reimbursed';
+          body.appendChild(badge);
+        }
+
         card.appendChild(body);
 
         const right = document.createElement('div');
@@ -4736,7 +4692,7 @@
         (t.category    || '').toLowerCase().includes(q) ||
         (t.expType     || '').toLowerCase().includes(q) ||
         (t.cardType    || '').toLowerCase().includes(q) ||
-        (t.description || '').toLowerCase().includes(q)
+        (t.note        || '').toLowerCase().includes(q)
       );
     });
     renderTransactions(filtered);
@@ -4798,48 +4754,48 @@
   });
   document.getElementById('income-search').addEventListener('input', e => filterIncomeTxns(e.target.value));
 
-  // ── Home modal ──
-  let homeTxns = [];
+  // ── Reimbursement modal ──
+  let reimbursementTxns = [];
 
-  function openHomeModal() {
-    homeTxns = [];
-    selectedHomeTxnRows = new Set();
-    document.getElementById('home-tx-list').innerHTML = '<div class="tx-empty"><span class="spinner"></span> Loading…</div>';
-    document.getElementById('home-modal-total').textContent = '';
-    document.getElementById('home-msg-box').textContent     = '';
+  function openReimbursementModal() {
+    reimbursementTxns = [];
+    selectedReimbursementRows = new Set();
+    document.getElementById('reimbursement-tx-list').innerHTML = '<div class="tx-empty"><span class="spinner"></span> Loading…</div>';
+    document.getElementById('reimbursement-modal-total').textContent = '';
+    document.getElementById('reimbursement-msg-box').textContent     = '';
     resetCopyBtn();
-    document.getElementById('home-modal-overlay').classList.add('visible');
+    document.getElementById('reimbursement-modal-overlay').classList.add('visible');
     document.body.style.overflow = 'hidden';
-    fetchHomeTxns();
+    fetchReimbursementTxns();
   }
 
-  function closeHomeModal() {
-    document.getElementById('home-modal-overlay').classList.remove('visible');
+  function closeReimbursementModal() {
+    document.getElementById('reimbursement-modal-overlay').classList.remove('visible');
     document.body.style.overflow = '';
-    homeTxns = [];
-    selectedHomeTxnRows = new Set();
+    reimbursementTxns = [];
+    selectedReimbursementRows = new Set();
   }
 
-  async function fetchHomeTxns() {
+  async function fetchReimbursementTxns() {
     try {
-      const url  = buildUrl({ action: 'transactions', source: 'home', month: viewMonth, year: viewYear });
+      const url  = buildUrl({ action: 'transactions', source: 'expenses', month: viewMonth, year: viewYear });
       const data = await fetch(url).then(r => r.json());
-      homeTxns   = (data.transactions || []).filter(t => t.source === 'home');
+      reimbursementTxns = (data.transactions || []).filter(t => (t.expType || '').toLowerCase() === 'reimbursement');
 
-      const total = homeTxns.reduce((s, t) => s + t.amount, 0);
-      document.getElementById('home-modal-total').textContent =
+      const total = reimbursementTxns.reduce((s, t) => s + t.amount, 0);
+      document.getElementById('reimbursement-modal-total').textContent =
         `${fmt(total)} · ${MONTHS[viewMonth - 1]} ${viewYear}`;
 
-      renderHomeTxns(homeTxns);
+      renderReimbursementTxns(reimbursementTxns);
     } catch {
-      document.getElementById('home-tx-list').innerHTML = '<div class="tx-empty">Error loading transactions</div>';
+      document.getElementById('reimbursement-tx-list').innerHTML = '<div class="tx-empty">Error loading transactions</div>';
     }
   }
 
-  function renderHomeTxns(txns) {
-    const container = document.getElementById('home-tx-list');
+  function renderReimbursementTxns(txns) {
+    const container = document.getElementById('reimbursement-tx-list');
     if (!txns.length) {
-      container.innerHTML = '<div class="tx-empty">No home transactions this month</div>';
+      container.innerHTML = '<div class="tx-empty">No reimbursable transactions this month</div>';
       return;
     }
 
@@ -4861,7 +4817,7 @@
 
       groups[dateKey].forEach(t => {
         const card = document.createElement('div');
-        card.className = 'tx-card home-tx pickable';
+        card.className = 'tx-card reimbursement pickable';
         card.dataset.row = t.rowIndex;
 
         const pick = document.createElement('div');
@@ -4870,8 +4826,8 @@
         card.appendChild(pick);
 
         const icon = document.createElement('div');
-        icon.className   = 'tx-icon home-tx';
-        icon.textContent = '⌂';
+        icon.className   = 'tx-icon reimbursement';
+        icon.textContent = '⇄';
         card.appendChild(icon);
 
         const body = document.createElement('div');
@@ -4884,8 +4840,13 @@
 
         const sub = document.createElement('div');
         sub.className   = 'tx-sub';
-        sub.textContent = [t.cardType, t.description].filter(Boolean).join(' · ');
+        sub.textContent = [t.cardType, t.note].filter(Boolean).join(' · ');
         body.appendChild(sub);
+
+        const badge = document.createElement('div');
+        badge.className = 'tx-reimb-badge' + (t.reimbursed ? ' reimbursed' : ' pending');
+        badge.textContent = t.reimbursed ? `Reimbursed · ${t.reimbursedAccount}` : 'Not reimbursed';
+        body.appendChild(badge);
 
         card.appendChild(body);
 
@@ -4899,21 +4860,42 @@
 
         card.appendChild(right);
 
+        // Marks whether this purchase has actually been paid back — turning
+        // it on prompts for which account received the money and credits
+        // that account's balance (excluded from income); turning it off
+        // reverses that credit. Independent of the pick-for-message click.
+        const reimbToggleWrap = document.createElement('label');
+        reimbToggleWrap.className = 'switch-label mini reimb-toggle';
+        reimbToggleWrap.title = 'Mark as reimbursed';
+        reimbToggleWrap.addEventListener('click', e => e.stopPropagation());
+        const reimbCheckbox = document.createElement('input');
+        reimbCheckbox.type    = 'checkbox';
+        reimbCheckbox.checked = !!t.reimbursed;
+        reimbCheckbox.addEventListener('change', () => {
+          if (reimbCheckbox.checked) openReimburseAccountModal(t);
+          else confirmSetReimbursed(t, false, '');
+        });
+        const reimbSlider = document.createElement('span');
+        reimbSlider.className = 'switch-slider';
+        reimbToggleWrap.appendChild(reimbCheckbox);
+        reimbToggleWrap.appendChild(reimbSlider);
+        card.appendChild(reimbToggleWrap);
+
         const editBtn = document.createElement('button');
         editBtn.className = 'tx-edit-btn';
         editBtn.setAttribute('aria-label', 'Edit transaction');
         editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
-        editBtn.addEventListener('click', e => { e.stopPropagation(); openEditTransaction(t, 'home'); });
+        editBtn.addEventListener('click', e => { e.stopPropagation(); openEditTransaction(t, 'reimbursement'); });
         card.appendChild(editBtn);
 
         const delBtn = document.createElement('button');
         delBtn.className = 'tx-delete-btn';
         delBtn.setAttribute('aria-label', 'Delete transaction');
         delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-        delBtn.addEventListener('click', e => { e.stopPropagation(); openConfirm(t, 'home'); });
+        delBtn.addEventListener('click', e => { e.stopPropagation(); openConfirm(t, 'reimbursement'); });
         card.appendChild(delBtn);
 
-        card.addEventListener('click', () => toggleHomeTxnPick(t.rowIndex));
+        card.addEventListener('click', () => toggleReimbursementPick(t.rowIndex));
 
         group.appendChild(card);
       });
@@ -4923,42 +4905,104 @@
 
     container.innerHTML = '';
     container.appendChild(list);
-    updateHomeTxnPickUI();
+    updateReimbursementPickUI();
+  }
+
+  // ── Reimbursed-into account picker ──
+  let pendingReimburse = null; // the transaction awaiting an account pick
+
+  function openReimburseAccountModal(t) {
+    const debitSlugs = activeCardSlugs.filter(s => cardMeta[s].type === 'debit');
+    if (!debitSlugs.length) {
+      showToast('Add a debit account first', true);
+      renderReimbursementTxns(reimbursementTxns);
+      return;
+    }
+    pendingReimburse = t;
+    document.getElementById('reimburse-account-hint').textContent =
+      `Which account did the ${fmt(t.amount)} for "${t.name}" get reimbursed into?`;
+
+    const list = document.getElementById('reimburse-account-list');
+    list.innerHTML = '';
+    debitSlugs.forEach(slug => {
+      const btn = document.createElement('button');
+      btn.type      = 'button';
+      btn.className = 'pay-source-opt';
+      btn.textContent = cardMeta[slug].name;
+      btn.addEventListener('click', () => {
+        closeReimburseAccountModal();
+        confirmSetReimbursed(pendingReimburse, true, cardMeta[slug].name);
+      });
+      list.appendChild(btn);
+    });
+
+    document.getElementById('reimburse-account-modal-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeReimburseAccountModal() {
+    document.getElementById('reimburse-account-modal-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+    pendingReimburse = null;
+    // Cancelling leaves the toggle where it was — re-render to undo the
+    // checkbox's own optimistic UI state.
+    renderReimbursementTxns(reimbursementTxns);
+  }
+
+  document.getElementById('reimburse-account-modal-close').addEventListener('click', closeReimburseAccountModal);
+  document.getElementById('reimburse-account-cancel').addEventListener('click', closeReimburseAccountModal);
+  document.getElementById('reimburse-account-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('reimburse-account-modal-overlay')) closeReimburseAccountModal();
+  });
+
+  async function confirmSetReimbursed(t, reimbursed, account) {
+    try {
+      const data = await fetch(buildUrl({
+        action: 'setReimbursed', rowIndex: t.rowIndex, reimbursed, account,
+      })).then(r => r.json());
+      if (!data.success) throw new Error(data.error || 'Could not update');
+      showToast(reimbursed ? `Marked reimbursed via ${account}` : 'Marked not reimbursed');
+      fetchReimbursementTxns();
+      loadData();
+    } catch (err) {
+      showToast(`Update failed: ${err.message}`, true);
+      renderReimbursementTxns(reimbursementTxns);
+    }
   }
 
   // ── Reimbursement message: optional per-transaction picker ──
   // Selection lives only in memory and resets every time the modal is opened
   // or closed — nothing here is persisted.
-  let selectedHomeTxnRows = new Set();
+  let selectedReimbursementRows = new Set();
 
-  function toggleHomeTxnPick(rowIndex) {
-    if (selectedHomeTxnRows.has(rowIndex)) selectedHomeTxnRows.delete(rowIndex);
-    else selectedHomeTxnRows.add(rowIndex);
-    updateHomeTxnPickUI();
+  function toggleReimbursementPick(rowIndex) {
+    if (selectedReimbursementRows.has(rowIndex)) selectedReimbursementRows.delete(rowIndex);
+    else selectedReimbursementRows.add(rowIndex);
+    updateReimbursementPickUI();
   }
 
-  function updateHomeTxnPickUI() {
-    document.querySelectorAll('#home-tx-list .tx-card[data-row]').forEach(card => {
-      const picked = selectedHomeTxnRows.has(Number(card.dataset.row));
+  function updateReimbursementPickUI() {
+    document.querySelectorAll('#reimbursement-tx-list .tx-card[data-row]').forEach(card => {
+      const picked = selectedReimbursementRows.has(Number(card.dataset.row));
       card.classList.toggle('selected', picked);
       const pick = card.querySelector('.tx-pick');
       if (pick) pick.classList.toggle('checked', picked);
     });
-    const effective = selectedHomeTxnRows.size
-      ? homeTxns.filter(t => selectedHomeTxnRows.has(t.rowIndex))
-      : homeTxns;
-    document.getElementById('home-msg-box').textContent = generateReimbursementMsg(effective);
+    const effective = selectedReimbursementRows.size
+      ? reimbursementTxns.filter(t => selectedReimbursementRows.has(t.rowIndex))
+      : reimbursementTxns;
+    document.getElementById('reimbursement-msg-box').textContent = generateReimbursementMsg(effective);
   }
 
   function generateReimbursementMsg(txns) {
     if (!txns.length) return '';
-    const heading = `${homeLabel} Expenses — ${MONTHS[viewMonth - 1]} ${viewYear}`;
+    const heading = `Reimbursement — ${MONTHS[viewMonth - 1]} ${viewYear}`;
     const lines   = [heading, ''];
 
     txns.forEach(t => {
       const card = t.cardType ? ` (${t.cardType})` : '';
       lines.push(`• ${fmtDateShort(t.date)} — ${t.name} — ${fmt(t.amount)}${card}`);
-      if (t.description) lines.push(`  Note: ${t.description}`);
+      if (t.note) lines.push(`  Note: ${t.note}`);
     });
 
     const total = txns.reduce((s, t) => s + t.amount, 0);
@@ -4969,19 +5013,19 @@
   }
 
   function resetCopyBtn() {
-    const btn = document.getElementById('btn-copy-msg');
+    const btn = document.getElementById('btn-copy-reimbursement-msg');
     btn.classList.remove('copied');
     btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Message`;
   }
 
-  document.getElementById('home-summary-card').addEventListener('click', openHomeModal);
-  document.getElementById('home-modal-close').addEventListener('click', closeHomeModal);
-  document.getElementById('home-modal-overlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('home-modal-overlay')) closeHomeModal();
+  document.getElementById('reimbursement-summary-card').addEventListener('click', openReimbursementModal);
+  document.getElementById('reimbursement-modal-close').addEventListener('click', closeReimbursementModal);
+  document.getElementById('reimbursement-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('reimbursement-modal-overlay')) closeReimbursementModal();
   });
 
-  document.getElementById('btn-copy-msg').addEventListener('click', async () => {
-    const text = document.getElementById('home-msg-box').textContent;
+  document.getElementById('btn-copy-reimbursement-msg').addEventListener('click', async () => {
+    const text = document.getElementById('reimbursement-msg-box').textContent;
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
@@ -4992,7 +5036,7 @@
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
-    const btn = document.getElementById('btn-copy-msg');
+    const btn = document.getElementById('btn-copy-reimbursement-msg');
     btn.classList.add('copied');
     btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
     setTimeout(resetCopyBtn, 2500);
@@ -5100,9 +5144,9 @@
 
       if (data.success) {
         closeConfirm();
-        if (modalSource === 'card')        fetchCardTransactions();
-        else if (modalSource === 'income') fetchIncomeTxns();
-        else if (modalSource === 'home')   fetchHomeTxns();
+        if (modalSource === 'card')             fetchCardTransactions();
+        else if (modalSource === 'income')        fetchIncomeTxns();
+        else if (modalSource === 'reimbursement') fetchReimbursementTxns();
         loadData();
         if (source !== 'home') loadRecurring();
       } else {
