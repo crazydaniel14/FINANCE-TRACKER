@@ -3178,9 +3178,11 @@
     // into the net figure below so the card can reflect a real balance
     // instead of resetting to $0 every month.
     const balanceAdj = meta.type === 'debit' ? (lastCardPayments[key] ?? 0) : 0;
-    // Debit-to-debit transfers are excluded from cardVal/incomeVal (they
-    // aren't spending or income), but they're real money moving in or out
-    // of this account, so they still need to shift its balance in net mode.
+    // Pure transfers/payments are excluded from cardVal/incomeVal (they
+    // aren't spending or income) — reimbursement purchases and credit-backs
+    // are NOT excluded from those two, since real money did leave/return to
+    // this specific card, so it's already reflected in the "spent" figure
+    // above; this just adds transfers/payments on top for the net balance.
     const transferAdj = meta.type === 'debit' ? (lastCardTransfersNet[key] ?? 0) : 0;
 
     const el    = document.getElementById('ct-' + slug);
