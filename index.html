@@ -640,7 +640,7 @@
     }
 
     .payment-wheel {
-      width: min(150px, 100%);
+      width: min(112px, 100%);
       aspect-ratio: 1;
       position: relative;
       display: grid;
@@ -667,13 +667,6 @@
       transform: rotate(-90deg);
       transform-origin: 50% 50%;
       transition: stroke-dashoffset 0.12s ease;
-    }
-    .payment-wheel .wheel-thumb {
-      fill: var(--green);
-      stroke: #07120d;
-      stroke-width: 3;
-      transform-origin: 50% 50%;
-      transition: transform 0.12s ease;
     }
     .wheel-center {
       position: absolute;
@@ -2514,7 +2507,7 @@
     <div class="settings-hint" id="adjust-balance-hint" style="margin-bottom: 14px;"></div>
 
     <div class="amount-section">
-      <label class="field-label" for="adjust-balance-input">Paid So Far</label>
+      <label class="field-label" for="adjust-balance-input" id="adjust-balance-field-label">Paid So Far</label>
       <div class="amount-wrap">
         <span class="amount-sign">$</span>
         <input id="adjust-balance-input" type="number" min="0" step="0.01" placeholder="0.00">
@@ -2545,7 +2538,6 @@
 
     <div class="settings-section">
       <label class="field-label">Card Amount Display</label>
-      <div class="settings-hint" style="margin-bottom: 8px;">Applies to debit accounts only — a credit card never carries a positive (income) balance, so it always just shows what's owed.</div>
       <div class="amount-mode-list" id="amount-mode-list"></div>
     </div>
 
@@ -2825,37 +2817,48 @@
   }
 
   function setPayment(cardId, paid, shouldSave = true) {
-    const state = paymentState[cardId];
-    state.paid = Math.round(clamp(moneyNumber(paid), 0, state.owed) * 100) / 100;
+    const state   = paymentState[cardId];
+    const isDebit = cardMeta[cardId] && cardMeta[cardId].type === 'debit';
+    // Credit: "paid toward this month's bill" — bounded to [0, owed]. Debit:
+    // a real account balance, which can be any amount, including negative
+    // (overdrawn) or well above what was spent this month.
+    state.paid = isDebit
+      ? Math.round(moneyNumber(paid) * 100) / 100
+      : Math.round(clamp(moneyNumber(paid), 0, state.owed) * 100) / 100;
     if (shouldSave) queuePaymentSave(cardId);
     renderPaymentWheel(cardId);
   }
 
   function renderPaymentWheel(cardId) {
-    const state = paymentState[cardId];
-    const owed = Math.max(state.owed, 0);
-    const paid = clamp(state.paid, 0, owed);
-    const ratio = owed > 0 ? paid / owed : 0;
+    const state   = paymentState[cardId];
+    const isDebit = cardMeta[cardId] && cardMeta[cardId].type === 'debit';
+    const owed    = Math.max(state.owed, 0);
+    const paid    = isDebit ? state.paid : clamp(state.paid, 0, owed);
+    const ratio   = owed > 0 ? clamp(paid, 0, owed) / owed : 0;
     const wheel = document.querySelector(`.payment-wheel[data-card="${cardId}"]`);
     const fill = wheel.querySelector('.wheel-fill');
-    const thumb = wheel.querySelector('.wheel-thumb');
     const input = document.getElementById(`pay-${cardId}`);
     const left = Math.max(owed - paid, 0);
 
     fill.style.strokeDasharray = WHEEL_CIRCUMFERENCE;
     fill.style.strokeDashoffset = WHEEL_CIRCUMFERENCE * (1 - ratio);
-    thumb.style.transform = `rotate(${ratio * 360}deg)`;
 
     // The input is a one-time "add or reduce by an amount" box, not a live
     // editor of the running total — it always stays blank rather than
-    // mirroring `paid`. Negative values are allowed so a payment can be
-    // corrected back down; the total still can't go below 0 or above owed.
-    input.max      = left.toFixed(2);
-    input.min      = (-paid).toFixed(2);
-    input.disabled = owed <= 0;
+    // mirroring `paid`. Credit stays bounded to [0, owed]; debit is a real
+    // balance so it isn't capped by this month's spend in either direction.
+    if (isDebit) {
+      input.removeAttribute('max');
+      input.removeAttribute('min');
+      input.disabled = false;
+    } else {
+      input.max      = left.toFixed(2);
+      input.min      = (-paid).toFixed(2);
+      input.disabled = owed <= 0;
+    }
 
     document.getElementById(`wheel-${cardId}-paid`).textContent = fmt(paid);
-    document.getElementById(`wheel-${cardId}-left`).textContent = `${fmt(left)} left`;
+    document.getElementById(`wheel-${cardId}-left`).textContent = isDebit ? '' : `${fmt(left)} left`;
   }
 
   // Commits whatever's typed in a card's add/reduce box as a delta on top of
@@ -2984,6 +2987,11 @@
     const homeVal    = lastHomeCardTotals[key] ?? 0;
     const incomeVal  = lastCardIncomeTotals[key] ?? 0;
     const expenseVal = cardVal + (includeHomeForCard[slug] ? homeVal : 0);
+    // For a debit account this is a manually-set account balance (see the
+    // "Adjust Balance" modal), not "amount paid toward a bill" — it folds
+    // into the net figure below so the card can reflect a real balance
+    // instead of resetting to $0 every month.
+    const balanceAdj = meta.type === 'debit' ? (lastCardPayments[key] ?? 0) : 0;
 
     const el    = document.getElementById('ct-' + slug);
     const subEl = document.getElementById('ct-' + slug + '-sub');
@@ -2994,13 +3002,15 @@
     const effectiveMode = meta.type === 'debit' ? amountDisplayMode : 'expenses';
 
     if (effectiveMode === 'net') {
-      const net = incomeVal - expenseVal;
+      const net = incomeVal - expenseVal + balanceAdj;
       if (net > 0) {
         el.textContent = `+${fmt(net)}`;
         el.className   = 'ct-amount green';
       } else if (net < 0) {
+        // A debit account dipping below zero is worth flagging — unlike a
+        // credit card, it should never really go negative.
         el.textContent = fmt(Math.abs(net));
-        el.className   = 'ct-amount';
+        el.className   = 'ct-amount red';
       } else {
         el.textContent = fmt(0);
         el.className   = 'ct-amount zero';
@@ -3651,10 +3661,9 @@
         <svg viewBox="0 0 120 120" aria-hidden="true">
           <circle class="wheel-track" cx="60" cy="60" r="48"></circle>
           <circle class="wheel-fill" cx="60" cy="60" r="48"></circle>
-          <circle class="wheel-thumb" cx="60" cy="12" r="7"></circle>
         </svg>
         <div class="wheel-center">
-          <div class="wheel-paid-label">Paid</div>
+          <div class="wheel-paid-label">${meta.type === 'debit' ? 'Balance' : 'Paid'}</div>
           <div class="wheel-paid-value" id="wheel-${slug}-paid">—</div>
           <div class="wheel-remaining" id="wheel-${slug}-left">— left</div>
         </div>`;
@@ -4314,20 +4323,35 @@
     allTransactions = [];
   }
 
-  // Quiet manual correction for a card's paid-so-far total — meant for
-  // catching a balance up to reality once (e.g. right after adopting the
-  // app), without re-entering every prior transaction or going through the
-  // payment-source prompt, which is for genuinely new payment events.
+  // Quiet manual correction, meant for catching a card up to reality once
+  // (e.g. right after adopting the app) without re-entering every prior
+  // transaction or going through the payment-source prompt, which is for
+  // genuinely new payment events. For a credit card this sets how much of
+  // the bill is already paid; for a debit account — which doesn't have an
+  // "owed" concept — it sets the actual account balance instead, like
+  // checking a banking app, and feeds directly into that card's net figure.
   function openAdjustBalanceModal() {
     if (!activeCardSlug) return;
     const meta  = cardMeta[activeCardSlug];
     const state = paymentState[activeCardSlug];
-    document.getElementById('adjust-balance-hint').textContent =
-      `Directly sets how much of ${meta.name}'s ${fmt(state.owed)} owed this month is already paid. Use this to catch up a balance instead of a real payment.`;
-    document.getElementById('adjust-balance-input').value = state.paid > 0 ? state.paid.toFixed(2) : '';
+    const input = document.getElementById('adjust-balance-input');
+
+    if (meta.type === 'debit') {
+      document.getElementById('adjust-balance-field-label').textContent = 'Account Balance';
+      document.getElementById('adjust-balance-hint').textContent =
+        `Sets ${meta.name}'s actual current balance, like checking a banking app — this feeds into its "Net" amount display instead of resetting to $0 every month. Can be negative if the account is overdrawn.`;
+      input.removeAttribute('min');
+    } else {
+      document.getElementById('adjust-balance-field-label').textContent = 'Paid So Far';
+      document.getElementById('adjust-balance-hint').textContent =
+        `Directly sets how much of ${meta.name}'s ${fmt(state.owed)} owed this month is already paid. Use this to catch up a balance instead of a real payment.`;
+      input.min = '0';
+    }
+
+    input.value = state.paid ? state.paid.toFixed(2) : '';
     document.getElementById('adjust-balance-modal-overlay').classList.add('visible');
     document.body.style.overflow = 'hidden';
-    setTimeout(() => document.getElementById('adjust-balance-input').focus(), 80);
+    setTimeout(() => input.focus(), 80);
   }
 
   function closeAdjustBalanceModal() {
