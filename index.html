@@ -3918,8 +3918,21 @@
     'Other':         '#7b8daa', // Muted steel
   };
 
+  // Deterministic (name-based, not order-based) color for categories with no
+  // fixed entry above, so a custom category always gets the same distinct
+  // hue instead of falling back to one flat grey for every custom category.
+  function hashCategoryName(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash * 31 + str.charCodeAt(i)) | 0;
+    }
+    return Math.abs(hash);
+  }
+
   function getCategoryColor(cat) {
-    return CAT_COLORS[cat] || '#384060';
+    if (CAT_COLORS[cat]) return CAT_COLORS[cat];
+    const hue = hashCategoryName(cat) % 360;
+    return `hsl(${hue}, 58%, 54%)`;
   }
 
   function renderCashflow(data) {
@@ -4126,7 +4139,7 @@
           data.typeTotals = { essential: 0, unnecessary: 0, home: data.homeTotal || 0 };
           
           (txData.transactions || []).forEach(t => {
-            if (t.source === 'expenses') {
+            if (t.source === 'expenses' && t.category !== 'Transfer') {
               const isIncome = (t.expType || '').toLowerCase() === 'income';
               if (!isIncome) {
                 const cat = t.category || 'Other';
@@ -4507,7 +4520,7 @@
       allTransactions = txns;
 
       const total = allTransactions
-        .filter(t => (t.expType || '').toLowerCase() !== 'income')
+        .filter(t => (t.expType || '').toLowerCase() !== 'income' && t.category !== 'Transfer')
         .reduce((s, t) => s + t.amount, 0);
       document.getElementById('card-modal-total').textContent =
         `${fmt(total)} spent · ${MONTHS[viewMonth - 1]} ${viewYear}`;
