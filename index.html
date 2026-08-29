@@ -440,6 +440,16 @@
       margin: 28px 0 12px;
     }
 
+    .card-group + .card-group { margin-top: 20px; }
+    .card-group-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-3);
+      margin-bottom: 10px;
+    }
+
     .card-type-row {
       display: grid;
       grid-template-columns: 1fr;
@@ -1033,6 +1043,59 @@
     .amount-mode-name { font-size: 0.8rem; font-weight: 700; color: var(--text); }
     .amount-mode-opt.active .amount-mode-name { color: var(--gold); }
     .amount-mode-desc { font-size: 0.68rem; color: var(--text-2); line-height: 1.4; }
+
+    .account-type-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-bottom: 10px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-2) transparent;
+    }
+    .account-type-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border-2);
+      border-radius: 10px;
+      padding: 8px 8px 8px 12px;
+    }
+    .account-type-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .account-type-toggle {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .account-type-opt {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: var(--text-3);
+      padding: 5px 10px;
+      font-size: 0.66rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, color 0.15s;
+    }
+    .account-type-opt.active { background: var(--gold-dim); color: var(--gold); }
 
     /* ── Expense type pills ── */
     .exptype-section { margin-bottom: 22px; }
@@ -2072,8 +2135,15 @@
 
   <!-- Spending by card type -->
   <div class="section-label">Spent by Card</div>
-  <div class="card-type-row" id="card-type-row">
-    <div class="tx-empty" style="padding: 20px 0;"><span class="spinner"></span> Loading…</div>
+  <div class="card-group" id="card-group-credit">
+    <div class="card-group-label">Credit</div>
+    <div class="card-type-row" id="card-type-row-credit">
+      <div class="tx-empty" style="padding: 20px 0;"><span class="spinner"></span> Loading…</div>
+    </div>
+  </div>
+  <div class="card-group" id="card-group-debit">
+    <div class="card-group-label">Debit</div>
+    <div class="card-type-row" id="card-type-row-debit"></div>
   </div>
 
   <!-- Monthly Fixed Expenses -->
@@ -2426,6 +2496,8 @@
 
     <div class="settings-section">
       <label class="field-label">Payment Methods</label>
+      <div class="settings-hint" style="margin-bottom: 8px;">Credit cards show at the top of "Spent by Card", debit accounts (Cash included) at the bottom.</div>
+      <div class="account-type-list" id="account-type-list"></div>
       <button type="button" class="btn-add-rec" id="settings-add-card-btn">
         <span style="font-size: 1.05rem; line-height: 1;">+</span> Add Card / Method
       </button>
@@ -2970,9 +3042,57 @@
     applyHomeLabel();
   }
 
+  function renderAccountTypeList() {
+    const list = document.getElementById('account-type-list');
+    list.innerHTML = '';
+    if (!activeCardSlugs.length) {
+      list.innerHTML = '<div class="settings-hint">No cards yet — add one below.</div>';
+      return;
+    }
+    activeCardSlugs.forEach(slug => {
+      const meta = cardMeta[slug];
+      const row = document.createElement('div');
+      row.className = 'account-type-row';
+
+      const name = document.createElement('span');
+      name.className   = 'account-type-name';
+      name.textContent = meta.name;
+      row.appendChild(name);
+
+      const toggle = document.createElement('div');
+      toggle.className = 'account-type-toggle';
+      ['credit', 'debit'].forEach(type => {
+        const btn = document.createElement('button');
+        btn.type      = 'button';
+        btn.className = 'account-type-opt' + (meta.type === type ? ' active' : '');
+        btn.textContent = type === 'credit' ? 'Credit' : 'Debit';
+        btn.addEventListener('click', () => setCardType(slug, type));
+        toggle.appendChild(btn);
+      });
+      row.appendChild(toggle);
+
+      list.appendChild(row);
+    });
+  }
+
+  async function setCardType(slug, type) {
+    const meta = cardMeta[slug];
+    if (!meta || meta.type === type) return;
+    meta.type = type;
+    renderAccountTypeList();
+    renderCtCards();
+    try {
+      const data = await fetch(buildUrl({ action: 'setCardType', name: meta.name, type })).then(r => r.json());
+      if (!data.success) throw new Error(data.error || 'Failed to save');
+    } catch (err) {
+      showToast(`Account type not saved: ${err.message}`, true);
+    }
+  }
+
   function openSettingsModal() {
     renderThemeGrid();
     renderAmountModeList();
+    renderAccountTypeList();
     document.getElementById('settings-home-label').value = homeLabel;
     document.getElementById('settings-payment-tracker-toggle').checked = showPaymentTracker;
     document.getElementById('settings-fractional-recurring-toggle').checked = fractionalRecurring;
@@ -3126,8 +3246,9 @@
   }
 
   function saveCardOrderFromDom() {
-    const container = document.getElementById('card-type-row');
-    const slugs = Array.from(container.querySelectorAll('.ct-card')).map(el => el.dataset.slug);
+    const creditSlugs = Array.from(document.getElementById('card-type-row-credit').querySelectorAll('.ct-card')).map(el => el.dataset.slug);
+    const debitSlugs  = Array.from(document.getElementById('card-type-row-debit').querySelectorAll('.ct-card')).map(el => el.dataset.slug);
+    const slugs = [...creditSlugs, ...debitSlugs];
     activeCardSlugs = slugs;
     localStorage.setItem(cardOrderStorageKey(), JSON.stringify(slugs.map(s => cardMeta[s].name)));
   }
@@ -3141,7 +3262,7 @@
       let base = slugifyCard(c.name), slug = base, n = 2;
       while (used.has(slug)) slug = `${base}-${n++}`;
       used.add(slug);
-      cardMeta[slug]    = { name: c.name, archived: c.archived };
+      cardMeta[slug]    = { name: c.name, archived: c.archived, type: c.type === 'debit' ? 'debit' : 'credit' };
       paymentState[slug] = { owed: 0, paid: 0 };
       if (!(slug in includeHomeForCard)) {
         includeHomeForCard[slug] = localStorage.getItem(`ft_includeHomeCard_${slug}`) === '1';
@@ -3155,7 +3276,9 @@
   let cardDragState = null; // { card, placeholder, offsetX, offsetY }
 
   function startCardDrag(card, e) {
-    const container = document.getElementById('card-type-row');
+    // The card's own parent (its credit or debit group) — captured once so
+    // the drag stays within that group and can't hop to the other one.
+    const container = card.parentNode;
     const rect = card.getBoundingClientRect();
 
     const placeholder = document.createElement('div');
@@ -3164,7 +3287,7 @@
     container.insertBefore(placeholder, card.nextSibling);
 
     cardDragState = {
-      card, placeholder,
+      card, placeholder, container,
       offsetX: e.clientX - rect.left,
       offsetY: e.clientY - rect.top,
     };
@@ -3184,7 +3307,7 @@
 
   function onCardDragMove(e) {
     if (!cardDragState) return;
-    const { card, offsetX, offsetY, placeholder } = cardDragState;
+    const { card, offsetX, offsetY, placeholder, container } = cardDragState;
     card.style.left = (e.clientX - offsetX) + 'px';
     card.style.top  = (e.clientY - offsetY) + 'px';
 
@@ -3192,7 +3315,6 @@
     const elAtPoint = document.elementFromPoint(e.clientX, e.clientY);
     card.style.pointerEvents = '';
 
-    const container = document.getElementById('card-type-row');
     const target = elAtPoint ? elAtPoint.closest('.ct-card') : null;
     if (target && target !== card && container.contains(target)) {
       const rect = target.getBoundingClientRect();
@@ -3232,10 +3354,23 @@
   }
 
   function renderCtCards() {
-    const container = document.getElementById('card-type-row');
-    container.innerHTML = '';
+    const creditContainer = document.getElementById('card-type-row-credit');
+    const debitContainer  = document.getElementById('card-type-row-debit');
+    creditContainer.innerHTML = '';
+    debitContainer.innerHTML  = '';
 
-    activeCardSlugs.forEach(slug => {
+    const creditSlugs = activeCardSlugs.filter(slug => cardMeta[slug].type !== 'debit');
+    const debitSlugs  = activeCardSlugs.filter(slug => cardMeta[slug].type === 'debit');
+
+    document.getElementById('card-group-credit').style.display = creditSlugs.length ? '' : 'none';
+    document.getElementById('card-group-debit').style.display  = debitSlugs.length  ? '' : 'none';
+
+    const entries = [
+      ...creditSlugs.map(slug => ({ slug, container: creditContainer })),
+      ...debitSlugs.map(slug => ({ slug, container: debitContainer })),
+    ];
+
+    entries.forEach(({ slug, container }) => {
       const meta  = cardMeta[slug];
       const known = getKnownCardStyle(meta.name);
 
